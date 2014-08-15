@@ -3,13 +3,14 @@ before_install:
 install:
   - sudo apt-get -y update
   - cd /tmp
+  - START_DIR = `pwd`
   - wget http://collectd.org/files/collectd-5.4.1.tar.bz2
   - tar jxf collectd-5.4.1.tar.bz2
   - cd collectd-5.4.1
   - ./configure --prefix=/
   - sudo make all install
   - sudo collectd -h
-  - cd -
+  - cd $START_DIR
   - sudo mkdir -p /etc/collectd/managed_config
   - sudo cp managed_config/* /etc/collectd/managed_config/
   - sudo cp collectd.conf /etc/collectd.conf
