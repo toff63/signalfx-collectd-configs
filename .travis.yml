@@ -11,4 +11,4 @@ install:
   - sudo find /etc/collectd/managed_config/ | xargs sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#"
   - sudo rm /etc/collectd/managed_config/10-innodb.conf
 
-script: sudo collectd -f
+script: sudo collectd -t
