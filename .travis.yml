@@ -1,4 +1,7 @@
 install:
   - apt-get install collectd
+  - mkdir /etc/collectd.d/managed_config
+  - cp managed_config/* /etc/collectd.d/managed_config/
+  - cp collectd.conf /etc/collectd.d/
 
 script: collectd -f
