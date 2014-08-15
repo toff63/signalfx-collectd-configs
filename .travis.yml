@@ -18,6 +18,8 @@ install:
   - ./configure --prefix=/
   - sudo make all install
   - sudo cp /etc/collectd/collectd.conf /etc/collectd.conf
+  - sudo sed -i -e "s#/usr/share/collectd/java/collectd-api.jar#/share/collectd/java/libs/collectd-api.jar#" /etc/collectd.d/managed_config/10-jmx.conf
+  - sudo sed -i -e "s#/usr/share/collectd/java/generic-jmx.jar#/share/collectd/java/libs/generic-jmx.jar#" /etc/collectd.d/managed_config/10-jmx.conf
   - sudo collectd -h
 
 script: sudo collectd -T
