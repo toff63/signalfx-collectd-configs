@@ -20,4 +20,4 @@ install:
   - sudo cp /etc/collectd/collectd.conf /etc/collectd.conf
   - sudo collectd -h
 
-script: sudo collectd -t
+script: sudo collectd -T
