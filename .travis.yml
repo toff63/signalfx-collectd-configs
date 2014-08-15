@@ -1,0 +1,4 @@
+install:
+  - apt-get install collectd
+
+script: collectd -f
