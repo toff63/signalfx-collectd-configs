@@ -15,3 +15,8 @@ Installation
   mkdir /etc/collectd.d/managed_config
   cp /opt/signalfx-collectd-configs/managed_config/10-bob.conf /etc/collectd.d/managed_config/
   ```
+
+Help
+----
+
+Read the instructions at the top of each config file for how to use or debug it.
