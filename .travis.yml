@@ -8,6 +8,6 @@ install:
   - sudo cp managed_config/* /etc/collectd/managed_config/
   - sudo cp collectd.conf /etc/collectd/
   - sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#" /etc/collectd/collectd.conf
-  - perl -MCPAN -e install Bundle::DBD::mysql
+  - sudo rm /etc/collectd/managed_config/10-innodb.conf
 
 script: sudo collectd -f
