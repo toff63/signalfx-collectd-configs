@@ -2,7 +2,7 @@ before_install:
   - sudo apt-get update
 install:
   - 
-  - sudo apt-get install collectd
+  - sudo apt-get install collectd libdbd-mysql-perl
   - sudo collectd -h
   - sudo mkdir /etc/collectd/managed_config
   - sudo cp managed_config/* /etc/collectd/managed_config/
