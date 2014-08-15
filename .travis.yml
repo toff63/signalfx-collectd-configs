@@ -4,7 +4,7 @@ install:
   - sudo mkdir -p /etc/collectd/managed_config
   - sudo cp managed_config/* /etc/collectd/managed_config/
   - sudo cp collectd.conf /etc/collectd/collectd.conf
-  - sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#" /etc/collectd.conf
+  - sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#" /etc/collectd/collectd.conf
   - sudo find /etc/collectd/managed_config/ -type f | xargs sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#"
   - sudo rm /etc/collectd/managed_config/10-innodb.conf
   - sudo apt-get -y update
