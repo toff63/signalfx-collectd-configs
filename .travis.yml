@@ -3,8 +3,9 @@ before_install:
 install:
   - 
   - sudo apt-get install collectd
-  - sudo mkdir /etc/collectd.d/managed_config
-  - sudo cp managed_config/* /etc/collectd.d/managed_config/
-  - sudo cp collectd.conf /etc/collectd.d/
+  - sudo collectd -h
+  - sudo mkdir /etc/collectd/managed_config
+  - sudo cp managed_config/* /etc/collectd/managed_config/
+  - sudo cp collectd.conf /etc/collectd/
 
 script: sudo collectd -f
