@@ -3,7 +3,7 @@ before_install:
 install:
   - sudo apt-get -y update
   - cd /tmp
-  - START_DIR = `pwd`
+  - START_DIR=`pwd`
   - wget http://collectd.org/files/collectd-5.4.1.tar.bz2
   - tar jxf collectd-5.4.1.tar.bz2
   - cd collectd-5.4.1
