@@ -1,0 +1,61 @@
+export LATEST_VER=5.4.1
+vercomp () {
+    if [[ $1 == "$2" ]]
+    then
+        echo 0
+        return
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+    do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++))
+    do
+        if [[ -z ${ver2[i]} ]]
+        then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]}))
+        then
+            echo 1
+            return
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]}))
+        then
+            echo 2
+            return
+        fi
+    done
+    echo 0
+}
+
+check_for_err() {
+    if [ $? != 0 ]; then
+    printf "FAILED\n";
+    exit 1;
+    else
+    printf "$@";
+    fi
+}
+
+find_installed_collectd(){
+   for p in /opt/signalfx-collectd/sbin/collectd /usr/sbin/collectd "/usr/local/sbin/collectd"; do
+       if [ -x $p ]; then
+           COLLECTD=${p}
+           find_collectd_ver
+           break;
+       fi
+   done
+}
+
+find_collectd_ver() {
+    COLLECTD_VER=$(${COLLECTD} -h | grep -oP 'collectd \K.*,' | cut -d, -f1)
+    if [ -z "$COLLECTD_VER" ]; then
+        echo "Failed to figure out CollectD version";
+        exit 2;
+    fi
+}
