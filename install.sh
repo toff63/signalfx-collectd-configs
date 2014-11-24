@@ -158,7 +158,7 @@ install_signalfx_plugin(){
                read -p "Invalid input. Input SignalFuse user name: " SFX_USER
            done
        fi
-       API_TOKEN=$(python ${PLUGIN_INSTALL_DIR}/get_all_auth_tokens.py --error_on_multiple "${SFX_ORG}" "${SFX_USER}")
+       API_TOKEN=$(python ${PLUGIN_INSTALL_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
           echo "Failed to get SignalFuse API token";
           exit 2;
