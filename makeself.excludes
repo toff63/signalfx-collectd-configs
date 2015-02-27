@@ -1,0 +1,7 @@
+.arcconfig
+.DS_Store
+.gitignore
+.travis.yml
+.git
+makeself.excludes
+create_isntaller.sh
