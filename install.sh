@@ -13,6 +13,11 @@ get_collectd_config() {
         echo "Success";
     fi
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
+    if [ "$COLLECTD_ETC" == "/etc" ];
+        COLLECTD_ETC = "/etc/collectd.d"
+        mkdir -p ${COLLECTD_ETC};
+        check_for_success "Failed to make /etc/collectd.d";
+    fi
     COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
     printf "Getting TypesDB default value..."
     if [ -x /usr/bin/strings ]; then
