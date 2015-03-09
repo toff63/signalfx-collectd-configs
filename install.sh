@@ -62,13 +62,13 @@ get_source_config() {
         fi
         ;;
      "input")
-        if [ -z "$HOSTNAME" ]; then
-            read -p "Input hostname value: " -u 3 HOSTNAME < /dev/tty
-            while [ -z "$HOSTNAME" ]; do
-              read -p "Invalid input. Input hostname value: " -u 3 HOSTNAME < /dev/tty
+        if [ -z "$INPUT_HOSTNAME" ]; then
+            read -p "Input hostname value: " -u 3 INPUT_HOSTNAME < /dev/tty
+            while [ -z "$INPUT_HOSTNAME" ]; do
+              read -p "Invalid input. Input hostname value: " -u 3 INPUT_HOSTNAME < /dev/tty
             done
         fi
-        SOURCE_NAME_INFO="Hostname \"${HOSTNAME}\""
+        SOURCE_NAME_INFO="Hostname \"${INPUT_HOSTNAME}\""
         ;;
     "dns")
         SOURCE_NAME_INFO="FQDNLookup   true"
@@ -118,7 +118,7 @@ parse_args(){
            -s | --source_type )
                SOURCE_TYPE="$2"; shift 2 ;;
            --hostname )
-               HOSTNAME="$2"; shift 2 ;;
+               INPUT_HOSTNAME="$2"; shift 2 ;;
            -t | --api_token)
                API_TOKEN="$2"; shift 2 ;;
            -u | --user)
