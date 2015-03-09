@@ -14,7 +14,7 @@ get_collectd_config() {
     fi
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
     if [ "$COLLECTD_ETC" == "/etc" ]; then
-        COLLECTD_ETC = "/etc/collectd.d"
+        COLLECTD_ETC="/etc/collectd.d"
         mkdir -p ${COLLECTD_ETC};
         check_for_success "Failed to make /etc/collectd.d";
     fi
