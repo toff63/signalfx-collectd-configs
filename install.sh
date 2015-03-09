@@ -15,8 +15,9 @@ get_collectd_config() {
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
     if [ "$COLLECTD_ETC" == "/etc" ]; then
         COLLECTD_ETC="/etc/collectd.d"
+        printf 'Making "/etc/collectd.d..."
         mkdir -p ${COLLECTD_ETC};
-        check_for_err "Failed to make /etc/collectd.d";
+        check_for_err "Success\n";
     fi
     COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
     printf "Getting TypesDB default value..."
@@ -43,10 +44,10 @@ get_source_config() {
         echo "aws - Use the AWS instance id. This is is helpful if you use tags"
         echo "      or other AWS attributes to group metrics"
         echo
-        read -p "How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE
+        read -p "How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/ttyn
 
         while [ "$SOURCE_TYPE" != "dns" -a "$SOURCE_TYPE" != "input" -a "$SOURCE_TYPE" != "aws" ]; do
-            read -p "Invalid answer. How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE
+            read -p "Invalid answer. How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/ttyn
         done
     fi
 
@@ -62,9 +63,9 @@ get_source_config() {
         ;;
      "input")
         if [ -z "$HOSTNAME" ]; then
-            read -p "Input hostname value: " HOSTNAME
+            read -p "Input hostname value: " -u 3 HOSTNAME < /dev/tty
             while [ -z "$HOSTNAME" ]; do
-              read -p "Invalid input. Input hostname value: " HOSTNAME
+              read -p "Invalid input. Input hostname value: " -u 3 HOSTNAME < /dev/tty
             done
         fi
         SOURCE_NAME_INFO="Hostname \"${HOSTNAME}\""
@@ -153,9 +154,9 @@ install_write_http_plugin(){
 
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
-           read -p "Input SignalFuse user name: " SFX_USER
+           read -p "Input SignalFuse user name: " SFX_USER < /dev/tty
            while [ -z "${SFX_USER}" ]; do
-               read -p "Invalid input. Input SignalFuse user name: " SFX_USER
+               read -p "Invalid input. Input SignalFuse user name: " SFX_USER < /dev/tty
            done
        fi
        API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
