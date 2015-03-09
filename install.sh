@@ -15,7 +15,7 @@ get_collectd_config() {
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
     if [ "$COLLECTD_ETC" == "/etc" ]; then
         COLLECTD_ETC="/etc/collectd.d"
-        printf 'Making "/etc/collectd.d..."
+        printf "Making /etc/collectd.d..."
         mkdir -p ${COLLECTD_ETC};
         check_for_err "Success\n";
     fi
@@ -44,10 +44,10 @@ get_source_config() {
         echo "aws - Use the AWS instance id. This is is helpful if you use tags"
         echo "      or other AWS attributes to group metrics"
         echo
-        read -p "How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/ttyn
+        read -p "How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/tty
 
         while [ "$SOURCE_TYPE" != "dns" -a "$SOURCE_TYPE" != "input" -a "$SOURCE_TYPE" != "aws" ]; do
-            read -p "Invalid answer. How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/ttyn
+            read -p "Invalid answer. How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/tty
         done
     fi
 
