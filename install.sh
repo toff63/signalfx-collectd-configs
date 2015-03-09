@@ -63,9 +63,9 @@ get_source_config() {
         ;;
      "input")
         if [ -z "$INPUT_HOSTNAME" ]; then
-            read -p "Input hostname value: " -u 3 INPUT_HOSTNAME < /dev/tty
+            read -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
             while [ -z "$INPUT_HOSTNAME" ]; do
-              read -p "Invalid input. Input hostname value: " -u 3 INPUT_HOSTNAME < /dev/tty
+              read -p "Invalid input. Input hostname value: " INPUT_HOSTNAME < /dev/tty
             done
         fi
         SOURCE_NAME_INFO="Hostname \"${INPUT_HOSTNAME}\""
