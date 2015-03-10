@@ -53,6 +53,19 @@ LoadPlugin load
 LoadPlugin memory
 LoadPlugin network
 LoadPlugin protocols
+<Plugin "protocols">
+  Value "Icmp:InDestUnreachs"
+  Value "Tcp:CurrEstab"
+  Value "Tcp:OutSegs"
+  Value "Tcp:RetransSegs"
+  Value "TcpExt:DelayedACKs"
+  Value "TcpExt:DelayedACKs"
+
+  Value "/Tcp:.*Opens/"
+  Value "/^TcpExt:.*Octets/"
+  IgnoreSelected false
+</Plugin>
+
 LoadPlugin uptime
 
 Include "%%%COLLECTDMANAGEDCONFIG%%%"
