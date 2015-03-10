@@ -1,10 +1,10 @@
-SignalFuse collectd configs
+SignalFx collectd configs
 ===========================
 
 About
 -----
 
-A collection of collectd configs that work well with SignalFuse.
+A collection of collectd configs that work well with SignalFx.
 
 Installation
 ------------

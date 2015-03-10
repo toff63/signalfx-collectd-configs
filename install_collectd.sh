@@ -59,7 +59,7 @@ find_collectd(){
 get_sfx_collectd(){
     check_jdk
     echo "Fetching latest collectd for ${HOST_ID}-${HOST_RELEASE}..."
-    curl "https://dl.signalfuse.com/signalfx-collectd/${HOST_ID}/${HOST_RELEASE}/${JAVA_NAME}/signalfx-collectd-${HOST_TYPE}-${LATEST_VER}-latest-${JAVA_NAME}.tar.gz" -o /tmp/signalfx-collectd.tar.gz
+    curl "https://dl.signalfx.com/signalfx-collectd/${HOST_ID}/${HOST_RELEASE}/${JAVA_NAME}/signalfx-collectd-${HOST_TYPE}-${LATEST_VER}-latest-${JAVA_NAME}.tar.gz" -o /tmp/signalfx-collectd.tar.gz
     check_for_err "Success\n";
     printf "Uncompressing archive..."
     tar Cxzf /opt /tmp/signalfx-collectd.tar.gz

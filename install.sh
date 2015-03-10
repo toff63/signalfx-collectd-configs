@@ -81,9 +81,9 @@ get_source_config() {
 }
 
 usage(){
-    echo "$0 [-s|--source_type SOURCE_TYPE] [-t|--api_token API_TOKEN] [-u|--user SIGNALFUSE_USER]"
-    echo "   [-o| --org SIGNALFUSE_ORG] [--hostname HOSTNAME] [/path/to/collectd]"
-    echo "Installs collectd.conf and configures it for talking to SignalFuse."
+    echo "$0 [-s|--source_type SOURCE_TYPE] [-t|--api_token API_TOKEN] [-u|--user SIGNALFX_USER]"
+    echo "   [-o| --org SIGNALFX_ORG] [--hostname HOSTNAME] [/path/to/collectd]"
+    echo "Installs collectd.conf and configures it for talking to SignalFx."
     echo "If path to collectd is not specified then it will be searched for in well know places."
     echo
     echo "  -s | --source_type SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
@@ -95,9 +95,9 @@ usage(){
     echo
     echo "  Configuring SignalFX access"
     echo "------------------------------"
-    echo "  -t | --api_token API_TOKEN: If you already know your SignalFuse Token you can specify it."
-    echo "  -u | --user SIGNALFUSE_USER: The SignalFuse user name to use to fetch a user token"
-    echo "  -o | --org SIGNALFUSE_ORG: If the SignalFuse user is part of more than one organization this"
+    echo "  -t | --api_token API_TOKEN: If you already know your SignalFx API Token you can specify it."
+    echo "  -u | --user SIGNALFX_USER: The SignalFx user name to use to fetch a user token"
+    echo "  -o | --org SIGNALFX_ORG: If the SignalFxe user is part of more than one organization this"
     echo "                             parameter is required."
     echo
     exit "$1";
@@ -154,14 +154,14 @@ install_write_http_plugin(){
 
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
-           read -p "Input SignalFuse user name: " SFX_USER < /dev/tty
+           read -p "Input SignalFx user name: " SFX_USER < /dev/tty
            while [ -z "${SFX_USER}" ]; do
-               read -p "Invalid input. Input SignalFuse user name: " SFX_USER < /dev/tty
+               read -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
        API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
-          echo "Failed to get SignalFuse API token";
+          echo "Failed to get SignalFx API token";
           exit 2;
        fi
     fi
