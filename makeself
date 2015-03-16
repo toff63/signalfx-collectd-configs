@@ -143,7 +143,7 @@ COPY=none
 TAR_ARGS=cvf
 TAR_EXTRA=""
 DU_ARGS=-ks
-HEADER=/opt/boxen/homebrew/Cellar/makeself/2.2.0/libexec/makeself-header.sh
+HEADER=$(cd $(dirname $0) && pwd 2>/dev/null)/makeself-header.sh
 TARGETDIR=""
 
 # LSM file stuff
