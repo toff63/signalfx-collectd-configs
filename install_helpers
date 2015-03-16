@@ -53,7 +53,7 @@ find_installed_collectd(){
 }
 
 find_collectd_ver() {
-    COLLECTD_VER=$(${COLLECTD} -h | grep -oP 'collectd \K.*,' | cut -d, -f1)
+    COLLECTD_VER=$(${COLLECTD} -h | grep -oP 'collectd \K[\d.]+' | cut -d, -f1)
     if [ -z "$COLLECTD_VER" ]; then
         echo "Failed to figure out CollectD version";
         exit 2;
