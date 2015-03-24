@@ -70,7 +70,7 @@ def main():
     sf_userID = json.loads(res)['sf_userID']
 
     # Get the orgs
-    orgs_url = args.url + "/orguser?query=sf_userID:%s" % sf_userID
+    orgs_url = args.url + "/organization?query=sf_organization:%s" % (args.org or '*')
     headers = {'content-type': 'application/json', 'X-SF-TOKEN': sf_accessToken}
     req = urllib2.Request(orgs_url, headers=headers)
     resp = urllib2.urlopen(req)
@@ -85,8 +85,8 @@ def main():
                 sys.stdout.write(i['sf_apiAccessToken'])
                 printed_org = True
         else:
-            all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
             if args.print_user_org or not i['sf_organization'].startswith("per-user-org"):
+                all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
                 print ("%40s%40s" % (i['sf_organization'], i['sf_apiAccessToken']))
     if args.org is not None and not printed_org:
         sys.stderr.write("Unable to find the org you set.\n")
@@ -100,8 +100,8 @@ def main():
     if len(all_auth_tokens) > 1:
         sys.stderr.write(
             "Multiple auth tokens associated with this account.  Add an --org tag for the auth token you want to update to.\n")
-        examples = ["get_all_auth_tokens.py --org=%s" % s[0] for s in all_auth_tokens]
-        sys.stderr.write("\n".join(examples))
+        examples = ["get_all_auth_tokens.py --org=\"%s\"" % s[0] for s in all_auth_tokens]
+        sys.stderr.write("\n".join(examples)+"\n")
         sys.exit(1)
 
     replace_in_file(args.update, 'APIToken "(.*)"', 'APIToken "%s"' % all_auth_tokens[0][1])
