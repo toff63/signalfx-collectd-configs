@@ -81,58 +81,54 @@ get_source_config() {
 }
 
 usage(){
-    echo "$0 [-s|--source_type SOURCE_TYPE] [-t|--api_token API_TOKEN] [-u|--user SIGNALFX_USER]"
-    echo "   [-o| --org SIGNALFX_ORG] [--hostname HOSTNAME] [/path/to/collectd]"
+    echo "$0 [-s SOURCE_TYPE] [-t API_TOKEN] [-u SIGNALFX_USER]"
+    echo "   [-o SIGNALFX_ORG] [-H HOSTNAME] [/path/to/collectd]"
     echo "Installs collectd.conf and configures it for talking to SignalFx."
     echo "If path to collectd is not specified then it will be searched for in well know places."
     echo
-    echo "  -s | --source_type SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
-    echo "                      aws - use the aws instance id."
-    echo "                      hostname - set a hostname. See --hostname"
-    echo "                      dns - use FQDN of the host as the Hostname"
+    echo "  -s SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
+    echo "                    aws - use the aws instance id."
+    echo "                    hostname - set a hostname. See --hostname"
+    echo "                    dns - use FQDN of the host as the Hostname"
     echo
-    echo " --hostanme HOSTNAME: The Hostname value to use if you selected hostname as your source_type"
+    echo " -H HOSTNAME: The Hostname value to use if you selected hostname as your source_type"
     echo
     echo "  Configuring SignalFX access"
     echo "------------------------------"
-    echo "  -t | --api_token API_TOKEN: If you already know your SignalFx API Token you can specify it."
-    echo "  -u | --user SIGNALFX_USER: The SignalFx user name to use to fetch a user token"
-    echo "  -o | --org SIGNALFX_ORG: If the SignalFxe user is part of more than one organization this"
-    echo "                             parameter is required."
+    echo "  -t API_TOKEN:     If you already know your SignalFx API Token you can specify it."
+    echo "  -u SIGNALFX_USER: The SignalFx user name to use to fetch a user token"
+    echo "  -o SIGNALFX_ORG:  If the SignalFxe user is part of more than one organization this"
+    echo "                      parameter is required."
     echo
     exit "$1";
 }
 
 parse_args(){
-    TEMP=$(getopt -oo:s:t:u:h --longoptions source_type::,hostname::,api_token::,user::,org::,help \
-                 -n 'install-collectd' -- "$@")
-
-    if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
-
-    # Note the quotes around `$TEMP': they are essential!
-    eval set -- "$TEMP"
-
-
-    while true; do
-        case "$1" in
-           -s | --source_type )
-               SOURCE_TYPE="$2"; shift 2 ;;
-           --hostname )
-               INPUT_HOSTNAME="$2"; shift 2 ;;
-           -t | --api_token)
-               API_TOKEN="$2"; shift 2 ;;
-           -u | --user)
-               SFX_USER="$2"; shift 2 ;;
-           -o | --org)
-               SFX_ORG="--org=$2"; shift 2 ;;
-           -h | --help)
-              usage 0; ;;
-           -- ) shift; break ;;
-           * ) break ;;
+    while getopts ":s:t:u:o:H:h" opt; do
+        case "$opt" in
+           s)
+               SOURCE_TYPE="$OPTARG" ;;
+           H)
+               INPUT_HOSTNAME="$OPTARG" ;;
+           t)
+               API_TOKEN="$OPTARG" ;;
+           u)
+               SFX_USER="$OPTARG" ;;
+           o)
+               SFX_ORG="--org=$OPTARG" ;;
+           h)
+               usage 0; ;;
+	   \?) echo "Invalid option: -$OPTARG" >&2;
+	       exit 2;
+	       ;;
+	   :) echo "Option -$OPTARG requires an argument." >&2;
+	      exit 2;
+	      ;;
+           *) break ;;
        esac
     done
 
-    COLLECTD=$1
+    COLLECTD=${@:$OPTIND:1}
     if [ -z "${COLLECTD}" ]; then
         find_installed_collectd
         if [ -z "${COLLECTD}" ]; then
