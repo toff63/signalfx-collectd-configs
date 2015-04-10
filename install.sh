@@ -88,7 +88,7 @@ usage(){
     echo
     echo "  -s SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
     echo "                    aws - use the aws instance id."
-    echo "                    hostname - set a hostname. See --hostname"
+    echo "                    input - set a hostname. See --hostname"
     echo "                    dns - use FQDN of the host as the Hostname"
     echo
     echo " -H HOSTNAME: The Hostname value to use if you selected hostname as your source_type"
