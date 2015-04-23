@@ -104,7 +104,8 @@ usage(){
 }
 
 parse_args(){
-    while getopts ":s:t:u:o:H:h" opt; do
+    SFX_INGEST_URL="https://ingest.signalfx.com"
+    while getopts ":s:t:u:o:H:ha:i:" opt; do
         case "$opt" in
            s)
                SOURCE_TYPE="$OPTARG" ;;
@@ -116,6 +117,10 @@ parse_args(){
                SFX_USER="$OPTARG" ;;
            o)
                SFX_ORG="--org=$OPTARG" ;;
+           a)
+               SFX_API="--url=$OPTARG" ;;
+           i)
+               SFX_INGEST_URL="$OPTARG" ;;
            h)
                usage 0; ;;
 	   \?) echo "Invalid option: -$OPTARG" >&2;
@@ -155,7 +160,7 @@ install_write_http_plugin(){
                read -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
-       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_ORG} "${SFX_USER}")
+       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_API} ${SFX_ORG} "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
           echo "Failed to get SignalFx API token";
           exit 2;
@@ -163,6 +168,7 @@ install_write_http_plugin(){
     fi
     printf "Fixing SignalFX plugin configuration.."
     sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#" \
+        -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#" \
         "${MANAGED_CONF_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
     check_for_err "Success\n";
 }
