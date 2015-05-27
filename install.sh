@@ -160,7 +160,7 @@ install_write_http_plugin(){
                read -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
-       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --error_on_multiple ${SFX_API} ${SFX_ORG} "${SFX_USER}")
+       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --print_token_only --error_on_multiple ${SFX_API} ${SFX_ORG} "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
           echo "Failed to get SignalFx API token";
           exit 2;

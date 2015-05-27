@@ -2,6 +2,7 @@ import getpass
 import json
 import os
 import re
+import urllib
 
 try:
     import urllib2
@@ -35,6 +36,8 @@ def main():
                         help='If set, change output to only the auth token of this org')
     parser.add_argument('--update', default=None,
                         help='If set, will look for a collectd file and auto update to the auth token you select.')
+    parser.add_argument('--print_token_only', default=False, action='store_true',
+                        help='If set, only print out tokens')
     parser.add_argument('--error_on_multiple', default=False, action ='store_true',
                         help='If set then an error will be raised if the user is part of multiple organizations '
                              'and --org is not specified')
@@ -70,30 +73,34 @@ def main():
     sf_userID = json.loads(res)['sf_userID']
 
     # Get the orgs
-    orgs_url = args.url + "/organization?query=sf_organization:%s" % (args.org or '*')
+    orgs_url = args.url + "/organization?query=sf_organization:%s" % (urllib.quote(args.org or '*'))
     headers = {'content-type': 'application/json', 'X-SF-TOKEN': sf_accessToken}
     req = urllib2.Request(orgs_url, headers=headers)
     resp = urllib2.urlopen(req)
     res = resp.read()
     all_res = json.loads(res)
-    printed_org = False
     all_auth_tokens = []
     for i in all_res['rs']:
-        if args.org is not None:
-            if args.org == i['sf_organization']:
-                all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
-                sys.stdout.write(i['sf_apiAccessToken'])
-                printed_org = True
+        all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
+
+    if args.org is not None:
+        for org_name, api_token in all_auth_tokens:
+            if args.org == org_name:
+                print(api_token)
+                sys.exit(1)
         else:
-            if args.print_user_org or not i['sf_organization'].startswith("per-user-org"):
-                all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
-                print ("%40s%40s" % (i['sf_organization'], i['sf_apiAccessToken']))
-    if args.org is not None and not printed_org:
-        sys.stderr.write("Unable to find the org you set.\n")
-        sys.exit(1)
+            sys.stderr.write("Unable to find the org you set.\n")
+            sys.exit(1)
     if args.error_on_multiple and len(all_auth_tokens) > 1:
         sys.stderr.write('Users is part of more than one organization.\n')
         sys.exit(1)
+    if args.print_token_only:
+        for _, api_token in all_auth_tokens:
+            print(api_token)
+        sys.exit(1)
+    for org_name, api_token in all_auth_tokens:
+        if args.print_user_org or not org_name.startswith("per-user-org"):
+            print("%40s%40s" % (org_name, api_token))
     if args.update is None:
         sys.exit(0)
     assert len(all_auth_tokens) != 0
