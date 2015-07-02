@@ -38,17 +38,32 @@ ReadThreads 5
 LoadPlugin logfile
 
 <Plugin logfile>
-        LogLevel "info"
-        File "/var/log/signalfx-collectd.log"
-        Timestamp true
-        PrintSeverity false
+  LogLevel "info"
+  File "/var/log/signalfx-collectd.log"
+  Timestamp true
+  PrintSeverity false
 </Plugin>
 
 LoadPlugin cpu
 LoadPlugin cpufreq
 LoadPlugin df
+
 LoadPlugin disk
+<Plugin "disk">
+  Disk "/^loop\d+$/"
+  Disk "/^dm-\d+$/"
+  IgnoreSelected "true"
+</Plugin>
+
 LoadPlugin interface
+<Plugin "interface">
+  Interface "/^lo\d*$/"
+  Interface "/^docker.*/"
+  Interface "/^t(un|ap)\d*$/"
+  Interface "/^veth.*$/"
+  IgnoreSelected "true"
+</Plugin>
+
 LoadPlugin load
 LoadPlugin memory
 LoadPlugin network
