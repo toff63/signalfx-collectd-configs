@@ -61,7 +61,7 @@ get_source_config() {
             echo "Success";
         fi
         ;;
-     "input")
+    "input")
         if [ -z "$INPUT_HOSTNAME" ]; then
             read -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
             while [ -z "$INPUT_HOSTNAME" ]; do
@@ -74,8 +74,8 @@ get_source_config() {
         SOURCE_NAME_INFO="FQDNLookup   true"
         ;;
     *)
-       echo "Invalid SOURCE_TYPE value ${SOURCE_TYPE}";
-       exit 2;
+        echo "Invalid SOURCE_TYPE value ${SOURCE_TYPE}";
+        exit 2;
     esac
 
 }
@@ -152,7 +152,6 @@ install_config(){
 }
 
 install_write_http_plugin(){
-
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
            read -p "Input SignalFx user name: " SFX_USER < /dev/tty
@@ -208,14 +207,13 @@ main() {
     printf "Installing signalfx collectd configuration to %s: " "${COLLECTD_CONFIG}"
     sed -e "s#%%%TYPESDB%%%#${TYPESDB}#" \
         -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
-	-e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
+        -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
         -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
 
-    #install managed_configs
+    # Install managed_configs
     copy_configs
-
     verify_configs
 
     echo "Starting collectd"
