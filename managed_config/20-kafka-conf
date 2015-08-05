@@ -6,9 +6,8 @@
 #   https://collectd.org/wiki/index.php/Plugin:Java
 
 # System modifications:
-#   Open the JMX port on your cassandra app
-#   http://wiki.apache.org/cassandra/JmxInterface
-#   http://wiki.apache.org/cassandra/JmxGotchas
+#   Open the JMX port on your Kafka process
+#   http://kafka.apache.org/documentation.html#monitoring
 
 # Config file modifications:
 #   You must include 10-jmx.conf
