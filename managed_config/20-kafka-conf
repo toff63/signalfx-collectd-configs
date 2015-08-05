@@ -2,12 +2,11 @@
 #   Please follow the install instructions of 10-jmx.conf
 
 # Documentation:
-#   http://wiki.apache.org/cassandra/Metrics
+#   http://kafka.apache.org/documentation.html#monitoring
 #   https://collectd.org/wiki/index.php/Plugin:Java
 
 # System modifications:
 #   Open the JMX port on your Kafka process
-#   http://kafka.apache.org/documentation.html#monitoring
 
 # Config file modifications:
 #   You must include 10-jmx.conf
@@ -235,7 +234,7 @@
 
         <Connection>
             ServiceURL "service:jmx:rmi:///jndi/rmi://localhost:7099/jmxrmi"
-            Host "i-9ed4af72_kafka"
+            Host "testkafkaserver"
             Collect "classes"
             Collect "garbage_collector"
             Collect "memory-heap"
