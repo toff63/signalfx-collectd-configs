@@ -240,8 +240,6 @@
             Collect "memory-heap"
             Collect "memory-nonheap"
             Collect "memory_pool"
-            Collect "threading"
-            Collect "operating_system"
             
             Collect "kafka-all-messages"
             Collect "kafka-all-bytes-in"
