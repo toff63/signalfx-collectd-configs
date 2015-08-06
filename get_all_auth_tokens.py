@@ -1,8 +1,14 @@
 import getpass
-import json
 import os
 import re
 import urllib
+
+
+try:
+    import json
+except ImportError:
+    import simplejson
+    json = simplejson
 
 try:
     import urllib2
@@ -12,11 +18,11 @@ except ImportError:
     urllib2 = urllib.request
 have_argparse = True
 try:
-     import argparse
+    import argparse
 except ImportError:
-     from optparse import OptionParser
-     OptionParser.add_argument = OptionParser.add_option
-     have_argparse = False
+    from optparse import OptionParser
+    OptionParser.add_argument = OptionParser.add_option
+    have_argparse = False
 import sys
 
 
@@ -65,9 +71,12 @@ def main():
     req = urllib2.Request(args.url + "/session", json.dumps(json_payload), headers)
     try:
         resp = urllib2.urlopen(req)
-    except urllib2.HTTPError:
-        sys.stderr.write("Invalid user name/password\n")
-        sys.exit(1)
+    except urllib2.HTTPError, e:
+        if e.code == 201:
+            resp = e
+        else:
+            sys.stderr.write("Invalid user name/password\n")
+            sys.exit(1)
     res = resp.read()
     sf_accessToken = json.loads(res)['sf_accessToken']
     sf_userID = json.loads(res)['sf_userID']
@@ -123,16 +132,22 @@ def decode_string(str_to_decode):
 
 def replace_in_file(file_name, regex_to_change, new_subpart):
     p = re.compile(regex_to_change)
-    with open(file_name, 'rb') as f:
+    f = open(file_name, 'rb')
+    try:
         old_file_contents = decode_string(f.read())
+    finally:
+        f.close()
 
     (new_file_contents, num_replacements) = p.subn(new_subpart, old_file_contents)
     if num_replacements != 1:
         raise Exception("Invalid file format.  Please do auth token replacement manually")
 
     encoded_new_contents = new_file_contents.encode("UTF-8")
-    with open(file_name, 'wb') as f:
+    f = open(file_name, 'wb')
+    try:
         f.write(encoded_new_contents)
+    finally:
+        f.close()
 
 
 if __name__ == '__main__':
