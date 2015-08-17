@@ -101,7 +101,7 @@ def main():
             sys.stderr.write("Unable to find the org you set.\n")
             sys.exit(1)
     if args.error_on_multiple and len(all_auth_tokens) > 1:
-        sys.stderr.write('Users is part of more than one organization.\n')
+        sys.stderr.write('User is part of more than one organization.\n')
         sys.exit(1)
     if args.print_token_only:
         for _, api_token in all_auth_tokens:
