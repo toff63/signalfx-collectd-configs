@@ -7,3 +7,4 @@ makeself.excludes
 create_installer.sh
 makeself
 makeself-header.sh
+collectd-package-install.sh
