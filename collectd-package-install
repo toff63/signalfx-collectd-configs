@@ -102,7 +102,7 @@ Please enter the number of the OS you wish to install for:
 7. Ubuntu 14.04
 8. Ubuntu 12.04
 9. Other\n"
-	read -r selection
+	read -r selection < /dev/tty
 
 	if [ "$selection" -eq 9 ]
 		then
@@ -118,7 +118,7 @@ collectd for various Operating Systems.\n" && exit 0
 #confirm user input (yes or no)
 confirm ()
 {
-    read -r -p "Is this correct? [y/N] " response
+    read -r -p "Is this correct? [y/N] " response < /dev/tty
     if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
         then
     return
@@ -191,7 +191,7 @@ install_rpm_RHELcentos5.x_procedure()
             printf "We need you to provide the API Token for your org. This can be found @ https://app.signalfx.com/#/myprofile \n"
             printf "Please enter your API Token: \n"
     
-            read -r api_token
+            read -r api_token < /dev/tty
     
             printf "Starting Configuration of collectd... \n"
             curl https://s3.amazonaws.com/public-downloads--signalfuse-com/collectd-simple | sudo bash -s -- -t "$api_token"
