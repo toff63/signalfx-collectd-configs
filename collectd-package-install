@@ -15,7 +15,7 @@ aws_linux_2014_09_rpm="SignalFx-RPMs-AWS_EC2_Linux_2014_09-release-1.0-0.noarch.
 aws_linux_2015_03_rpm="SignalFx-RPMs-AWS_EC2_Linux_2015_03-release-1.0-0.noarch.rpm"
 
 #download location variables
-centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${centos_5_rpm}"
+centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${centos_7_rpm}"
 centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${centos_6_rpm}"
 centos_5="https://s3.amazonaws.com/public-downloads--signalfuse-com/rpms/SignalFx-rpms/release/${centos_5_rpm}"
 aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${aws_linux_2014_09_rpm}"
@@ -101,7 +101,8 @@ Please enter the number of the OS you wish to install for:
 6. Ubuntu 15.04
 7. Ubuntu 14.04
 8. Ubuntu 12.04
-9. Other\n"
+9. Other
+Enter your Selection: "
 	read -r selection < /dev/tty
 
 	if [ "$selection" -eq 9 ]
