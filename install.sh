@@ -6,10 +6,10 @@ source "${SCRIPT_DIR}/install_helpers"
 get_logfile() {
     LOGTO="/var/log/signalfx-collectd.log"
     if [ -f /etc/os-release ]; then
-       . /etc/os-release
-       if [ "$NAME" == "CentOS Linux" -a "$VERSION_ID" == "7" ]; then
-	   LOGTO="stdout";
-       fi
+        . /etc/os-release
+        if [ "$NAME" == "CentOS Linux" -a "$VERSION_ID" == "7" ]; then
+            LOGTO="stdout";
+        fi
     fi
 }
 
@@ -51,26 +51,15 @@ get_source_config() {
         echo "when reporting metrics."
         echo "dns - Use the name of the host by resolving it in dns"
         echo "input - You can enter a hostname to use as the source name"
-        echo "aws - Use the AWS instance id. This is is helpful if you use tags"
-        echo "      or other AWS attributes to group metrics"
         echo
-        read -p "How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/tty
+        read -p "How would you like to configure your Hostname? (dns  or input): " SOURCE_TYPE < /dev/tty
 
-        while [ "$SOURCE_TYPE" != "dns" -a "$SOURCE_TYPE" != "input" -a "$SOURCE_TYPE" != "aws" ]; do
-            read -p "Invalid answer. How would you like to configure your Hostname? (dns, input, or aws): " SOURCE_TYPE < /dev/tty
+        while [ "$SOURCE_TYPE" != "dns" -a "$SOURCE_TYPE" != "input" ]; do
+            read -p "Invalid answer. How would you like to configure your Hostname? (dns or input): " SOURCE_TYPE < /dev/tty
         done
     fi
 
     case $SOURCE_TYPE in
-    "aws")
-        printf "Fetching AWS instance id.."
-        SOURCE_NAME_INFO="Hostname \"$(curl -s http://169.254.169.254/latest/meta-data/instance-id)\""
-        if [ -z "${SOURCE_NAME_INFO}" ]; then
-            echo "FAILED";
-        else
-            echo "Success";
-        fi
-        ;;
     "input")
         if [ -z "$INPUT_HOSTNAME" ]; then
             read -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
@@ -97,7 +86,6 @@ usage(){
     echo "If path to collectd is not specified then it will be searched for in well know places."
     echo
     echo "  -s SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
-    echo "                    aws - use the aws instance id."
     echo "                    input - set a hostname. See --hostname"
     echo "                    dns - use FQDN of the host as the Hostname"
     echo
@@ -133,12 +121,12 @@ parse_args(){
                SFX_INGEST_URL="$OPTARG" ;;
            h)
                usage 0; ;;
-	   \?) echo "Invalid option: -$OPTARG" >&2;
-	       exit 2;
-	       ;;
-	   :) echo "Option -$OPTARG requires an argument." >&2;
-	      exit 2;
-	      ;;
+           \?) echo "Invalid option: -$OPTARG" >&2;
+               exit 2;
+               ;;
+           :) echo "Option -$OPTARG requires an argument." >&2;
+              exit 2;
+              ;;
            *) break ;;
        esac
     done
@@ -161,6 +149,20 @@ install_config(){
     check_for_err "Success\n"
 }
 
+check_for_aws() {
+    printf "Checking to see if this box is in AWS: "
+    INSTANCE_ID="$(curl -s --connect-timeout 1 http://169.254.169.254/latest/meta-data/instance-id)"
+    status=$?
+    if [ $status -eq 0 ]; then
+        printf "Using InstanceId: %s" "${INSTANCE_ID}"
+        EXTRA_DIMS="${SFX_INGEST_URL}?sfxdim_InstanceId=${INSTANCE_ID}"
+    elif [ $status -ne 28 ]; then
+        check_for_err
+    else
+        printf "Not IN AWS\n"
+    fi
+}
+
 install_write_http_plugin(){
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
@@ -175,9 +177,11 @@ install_write_http_plugin(){
           exit 2;
        fi
     fi
+    check_for_aws
     printf "Fixing SignalFX plugin configuration.."
-    sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#" \
-        -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#" \
+    sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
+        -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#g" \
+	-e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
         "${MANAGED_CONF_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
     check_for_err "Success\n";
 }
@@ -220,7 +224,7 @@ main() {
         -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
         -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
         -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
-	-e "s#%%%LOGTO%%%#${LOGTO}#" \
+        -e "s#%%%LOGTO%%%#${LOGTO}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
 
