@@ -3,6 +3,16 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
 source "${SCRIPT_DIR}/install_helpers"
 
+get_logfile() {
+    LOGTO="/var/log/signalfx-collectd.log"
+    if [ -f /etc/os-release ]; then
+       . /etc/os-release
+       if [ "$NAME" == "CentOS Linux" -a "$VERSION_ID" == "7" ]; then
+	   LOGTO="stdout";
+       fi
+    fi
+}
+
 get_collectd_config() {
     printf "Getting config file for collectd..."
     COLLECTD_CONFIG=$(${COLLECTD} -h 2>/dev/null | grep 'Config file' | awk '{ print $3; }')
@@ -189,6 +199,7 @@ verify_configs(){
 main() {
     get_collectd_config
     get_source_config
+    get_logfile
     okay_ver=$(vercomp "$COLLECTD_VER" 5.4.0)
     if [ "$okay_ver" != 2 ]; then
         WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 2000000\\nWriteQueueLimitLow  1800000";
@@ -209,6 +220,7 @@ main() {
         -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
         -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
         -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
+	-e "s#%%%LOGTO%%%#${LOGTO}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
 

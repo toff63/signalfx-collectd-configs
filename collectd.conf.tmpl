@@ -39,7 +39,7 @@ LoadPlugin logfile
 
 <Plugin logfile>
   LogLevel "info"
-  File "/var/log/signalfx-collectd.log"
+  File %%%LOGTO%%%
   Timestamp true
   PrintSeverity false
 </Plugin>
