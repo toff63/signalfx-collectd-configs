@@ -155,7 +155,7 @@ check_for_aws() {
     status=$?
     if [ $status -eq 0 ]; then
         printf "Using InstanceId: %s" "${INSTANCE_ID}"
-        EXTRA_DIMS="${SFX_INGEST_URL}?sfxdim_InstanceId=${INSTANCE_ID}"
+        EXTRA_DIMS="?sfxdim_InstanceId=${INSTANCE_ID}"
     elif [ $status -ne 28 ]; then
         check_for_err
     else
