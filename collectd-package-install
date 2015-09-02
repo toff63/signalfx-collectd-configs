@@ -31,6 +31,14 @@ if [ ! -f /etc/redhat-release ]
       hostOS_2=$(head -c 16 /etc/redhat-release) 
 fi
 
+#determine if the script is being run by root or not
+user=$(whoami)
+if [ "$user" == "root" ]; then 
+    sudo=""
+else
+    sudo="sudo"
+fi
+
 #Functions used throughout
 basic_collectd() 
 {
@@ -38,10 +46,10 @@ basic_collectd()
    if [ -z "$api_token" ]
       then
         #url to configure collectd asks for host-name and username:password
-        curl -sSL https://dl.signalfx.com/collectd-simple | sudo bash -s --
+        curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s --
    else
        #url to configure collectd asks for host-name	
-       curl -sSL https://dl.signalfx.com/collectd-simple | sudo bash -s -- -t "$api_token"
+       curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- -t "$api_token"
    fi
 }
 
@@ -134,7 +142,7 @@ install_rpm_collectd_procedure()
 {
     #update wget
     printf "Installing wget\n"
-    sudo yum -y install wget 
+    $sudo yum -y install wget 
     
     #download signalfx rpm for collectd
     printf "Downloading SignalFx RPM\n"
@@ -142,15 +150,15 @@ install_rpm_collectd_procedure()
     
     #install signalfx rpm for collectd
     printf "Installing SignalFx RPM\n"
-    sudo yum -y install $needed_rpm_name  
+    $sudo yum -y install $needed_rpm_name  
     
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
-    sudo yum -y install collectd  
+    $sudo yum -y install collectd  
     
     #install base plugins signalfx deems necessary
     printf "Installing base-plugins\n"
-    sudo yum -y install collectd-disk collectd-write_http 
+    $sudo yum -y install collectd-disk collectd-write_http 
     
     basic_collectd
 }
@@ -160,15 +168,15 @@ install_rpm_RHELcentos5.x_procedure()
 {
     #installing simple-json
     printf "Installing Simple-Json\n"
-    sudo yum -y install python-simplejson
+    $sudo yum -y install python-simplejson
     
     #installing/updating openssl
     printf "Install Openssl\n"
-    sudo yum -y install openssl
+    $sudo yum -y install openssl
     
     #installing wget
     printf "Installing wget\n"
-    sudo yum -y install wget
+    $sudo yum -y install wget
     
     #downloading signalfx rpm
     printf "Downloading SignalFx RPM\n"
@@ -176,15 +184,15 @@ install_rpm_RHELcentos5.x_procedure()
 
     #install signalfx rpm
     printf "Installing SignalFx RPM\n"
-    sudo yum -y install --nogpgcheck $centos_5_rpm
+    $sudo yum -y install --nogpgcheck $centos_5_rpm
     
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
-    sudo yum -y install collectd 
+    $sudo yum -y install collectd 
     
     #install base plugins signalfx deems necessary
     printf "Installing baseplugins\n"
-    sudo yum -y install collectd-disk collectd-write_http 
+    $sudo yum -y install collectd-disk collectd-write_http 
 
     #configure collectd to send metrics to signalfx
     if [ -z "$api_token" ]
@@ -195,9 +203,9 @@ install_rpm_RHELcentos5.x_procedure()
             read -r api_token < /dev/tty
     
             printf "Starting Configuration of collectd... \n"
-            curl https://s3.amazonaws.com/public-downloads--signalfuse-com/collectd-simple | sudo bash -s -- -t "$api_token"
+            curl https://s3.amazonaws.com/public-downloads--signalfuse-com/collectd-simple | $sudo bash -s -- -t "$api_token"
         else
-    	   curl https://s3.amazonaws.com/public-downloads--signalfuse-com/collectd-simple  | sudo bash -s -- -t "$api_token"
+    	   curl https://s3.amazonaws.com/public-downloads--signalfuse-com/collectd-simple  | $sudo bash -s -- -t "$api_token"
     fi
 }
 
@@ -207,23 +215,23 @@ install_debian_collectd_procedure() #install function for debian collectd
 {
     #update apt-get
     printf "Updating apt-get\n"
-    sudo apt-get -y update
+    $sudo apt-get -y update
 
     #Installing dependent packages to later add signalfx repo
     printf "Installing source package to get SignalFx collectd package\n"
-    sudo apt-get -y install $needed_package_name 
+    $sudo apt-get -y install $needed_package_name 
     
     #Adding signalfx repo
     printf "Getting SignalFx collectd package\n"
-    sudo add-apt-repository -y ppa:signalfx/collectd-release
+    $sudo add-apt-repository -y ppa:signalfx/collectd-release
     
     #Updating apt-get to reference the signalfx repo to install collectd
     printf "Updating apt-get to reference new SignalFx package\n"
-    sudo apt-get -y update
+    $sudo apt-get -y update
     
     #Installing signalfx collectd package and plugins
     printf "Installing collectd and additional plugins\n"
-    sudo apt-get -y install collectd 
+    $sudo apt-get -y install collectd 
     
     #Configuring collectd with basic configuration
     basic_collectd
