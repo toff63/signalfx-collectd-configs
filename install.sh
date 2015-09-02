@@ -4,7 +4,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
 source "${SCRIPT_DIR}/install_helpers"
 
 get_logfile() {
-    LOGTO="/var/log/signalfx-collectd.log"
+    LOGTO="\"/var/log/signalfx-collectd.log\""
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         if [ "$NAME" == "CentOS Linux" -a "$VERSION_ID" == "7" ]; then
