@@ -154,7 +154,7 @@ check_for_aws() {
     INSTANCE_ID="$(curl -s --connect-timeout 1 http://169.254.169.254/latest/meta-data/instance-id)"
     status=$?
     if [ $status -eq 0 ]; then
-        printf "Using InstanceId: %s" "${INSTANCE_ID}"
+        printf "Using InstanceId: %s\n" "${INSTANCE_ID}"
         EXTRA_DIMS="?sfxdim_InstanceId=${INSTANCE_ID}"
     elif [ $status -ne 28 ]; then
         check_for_err
