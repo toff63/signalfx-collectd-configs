@@ -244,7 +244,12 @@ main() {
     verify_configs
 
     echo "Starting collectd"
-    ${COLLECTD}
+    if [ "$(dirname "${COLLECTD_CONFIG}")" == "/etc" -a ! -z "$(which service)" ]; then
+        service collectd restart
+    else
+        killall "${COLLECTD}"
+        ${COLLECTD}
+    fi
 }
 
 BASE_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
