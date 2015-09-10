@@ -23,13 +23,18 @@ get_collectd_config() {
         echo "Success";
     fi
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
+    USE_SERVICE_COLLECTD=0
     if [ "$COLLECTD_ETC" == "/etc" ]; then
+	USE_SERVICE_COLLECTD=1
         COLLECTD_ETC="/etc/collectd.d"
         printf "Making /etc/collectd.d..."
         mkdir -p ${COLLECTD_ETC};
         check_for_err "Success\n";
+    elif [ "$COLLECTD_ETC" == "/etc/collectd" ]; then
+        USE_SERVICE_COLLECTD=1
     fi
-    COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
+
+	 COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
     printf "Getting TypesDB default value..."
     if [ -x /usr/bin/strings ]; then
         TYPESDB=$(strings "${COLLECTD}" | grep /types.db)
@@ -233,7 +238,7 @@ main() {
     verify_configs
 
     echo "Starting collectd"
-    if [ "$(dirname "${COLLECTD_CONFIG}")" == "/etc" -a ! -z "$(which service)" ]; then
+    if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
         service collectd restart
     else
         killall "${COLLECTD}"
