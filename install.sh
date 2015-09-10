@@ -151,20 +151,9 @@ install_config(){
 
 check_for_aws() {
     printf "Checking to see if this box is in AWS: "
-    DOC="$(curl -s --connect-timeout 1 http://169.254.169.254/latest/dynamic/instance-identity/document)"
+    AWS_UNIQUE_ID=$(${SCRIPT_DIR}/get_aws_unique_id)
     status=$?
     if [ $status -eq 0 ]; then
-        eval `echo "$DOC" | awk -F: '
-        function print_var(line){
-            split($1, name_parts, "\"")
-            split($2, val_parts, "\"")
-            printf("%s=%s\n", toupper(name_parts[2]), val_parts[2])
-        }
-        $1~/ *\"accountId\"/{ print_var($0) }
-        $1~/ *\"instanceId\"/{ print_var($0) }
-        $1~/ *\"region\"/{ print_var($0) }
-        '`
-        AWS_UNIQUE_ID=${INSTANCEID}_${REGION}_${ACCOUNTID}
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
     elif [ $status -ne 28 ]; then
