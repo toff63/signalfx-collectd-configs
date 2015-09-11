@@ -116,8 +116,8 @@ Enter your Selection: "
 	if [ "$selection" -eq 9 ]
 		then
 			printf "\nWe currently do not support any other OS with our collectd packages.
-Please visit ~LINK~ for detailed instructions on how to install
-collectd for various Operating Systems.\n" && exit 0
+Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
+instructions on how to install collectd for various Operating Systems.\n" && exit 0
 	
 	else
 			assign_needed_os
