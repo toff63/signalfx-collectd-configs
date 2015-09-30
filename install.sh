@@ -88,6 +88,8 @@ usage(){
     echo "$0 [-s SOURCE_TYPE] [-t API_TOKEN] [-u SIGNALFX_USER]"
     echo "   [-o SIGNALFX_ORG] [-H HOSTNAME] [/path/to/collectd]"
     echo "Installs collectd.conf and configures it for talking to SignalFx."
+    echo "Installs the SignalFx collectd plugin on supported oses.  If on an unknown os"
+    echo "and the plugin is already present, will configure it."
     echo "If path to collectd is not specified then it will be searched for in well know places."
     echo
     echo "  -s SOURCE_TYPE : How to configure the Hostname field in collectd.conf:"
@@ -108,7 +110,8 @@ usage(){
 
 parse_args(){
     SFX_INGEST_URL="https://ingest.signalfx.com"
-    while getopts ":s:t:u:o:H:ha:i:" opt; do
+    ver=release
+    while getopts ":s:t:u:o:H:hbTa:i:" opt; do
         case "$opt" in
            s)
                SOURCE_TYPE="$OPTARG" ;;
@@ -126,6 +129,14 @@ parse_args(){
                SFX_INGEST_URL="$OPTARG" ;;
            h)
                usage 0; ;;
+           b)
+               ver=beta
+               source "${SCRIPT_DIR}/install_helpers"
+               ;;
+           T)
+               ver=test
+               source "${SCRIPT_DIR}/install_helpers"
+               ;;
            \?) echo "Invalid option: -$OPTARG" >&2;
                exit 2;
                ;;
@@ -161,14 +172,14 @@ check_for_aws() {
     if [ $status -eq 0 ]; then
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
-    elif [ $status -ne 28 ]; then
-        check_for_err
+    elif [ $status -ne 28 -a $status -ne 7 ]; then
+        check_for_err "Unknown Error $status\n"
     else
         printf "Not IN AWS\n"
     fi
 }
 
-install_write_http_plugin(){
+install_plugin_common() {
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
            read -p "Input SignalFx user name: " SFX_USER < /dev/tty
@@ -183,7 +194,26 @@ install_write_http_plugin(){
        fi
     fi
     check_for_aws
+}
+
+install_signalfx_plugin() {
+    if [ -n "$NO_PLUGIN" ]; then
+        return
+    fi
+    install_plugin_common
+
     printf "Fixing SignalFX plugin configuration.."
+    sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
+        -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#g" \
+        -e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
+        "${MANAGED_CONF_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
+    check_for_err "Success\n";
+}
+
+install_write_http_plugin(){
+    install_plugin_common 
+
+    printf "Fixing write_http plugin configuration.."
     sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
         -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#g" \
 	-e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
@@ -205,13 +235,18 @@ verify_configs(){
     echo "All good"
 }
 
+
 main() {
     get_collectd_config
     get_source_config
     get_logfile
     okay_ver=$(vercomp "$COLLECTD_VER" 5.4.0)
     if [ "$okay_ver" != 2 ]; then
-        WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 2000000\\nWriteQueueLimitLow  1800000";
+        WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 2000000\\nWriteQueueLimitLow  1800000"
+    fi
+    okay_ver=$(vercomp "$COLLECTD_VER" 5.5.0)
+    if [ "$okay_ver" != 2 ]; then
+        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true"
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
@@ -232,6 +267,10 @@ main() {
         -e "s#%%%LOGTO%%%#${LOGTO}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
+
+    # Install Plugin
+    install_plugin
+    install_signalfx_plugin
 
     # Install managed_configs
     copy_configs
