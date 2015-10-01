@@ -6,18 +6,31 @@ needed_rpm=null_rpm_link
 needed_rpm_name=null_rpm_name
 needed_package_name=null_package_name
 api_token=$1
+stage=$2 # Defaults to release. Enter --beta or --test as appropriate
+
+installer_level=""
+#determine the stage (release, beta or test) of collectd to be installed
+if [ "$stage" == "--beta" ]; then
+    stage="beta"
+    installer_level="-b"
+elif [ "$stage" == "--test" ]; then
+    stage="test"
+    installer_level="-T"
+else
+    stage="release"
+fi
 
 #rpm file variables
-centos_7_rpm="SignalFx-RPMs-centos-7-release-1.0-0.noarch.rpm"
-centos_6_rpm="SignalFx-RPMs-centos-6-release-1.0-0.noarch.rpm"
-aws_linux_2014_09_rpm="SignalFx-RPMs-AWS_EC2_Linux_2014_09-release-1.0-0.noarch.rpm"
-aws_linux_2015_03_rpm="SignalFx-RPMs-AWS_EC2_Linux_2015_03-release-1.0-0.noarch.rpm"
+centos_7_rpm="SignalFx-collectd-RPMs-centos-7-${stage}-latest.noarch.rpm"
+centos_6_rpm="SignalFx-collectd-RPMs-centos-6-${stage}-latest.noarch.rpm"
+aws_linux_2014_09_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2014_09-${stage}-latest.noarch.rpm"
+aws_linux_2015_03_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2015_03-${stage}-latest.noarch.rpm"
 
 #download location variables
-centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${centos_7_rpm}"
-centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${centos_6_rpm}"
-aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${aws_linux_2014_09_rpm}"
-aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/release/${aws_linux_2015_03_rpm}"
+centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_7_rpm}"
+centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_6_rpm}"
+aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2014_09_rpm}"
+aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_03_rpm}"
 
 #determine hostOS for newer versions of Linux
 hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
@@ -44,10 +57,12 @@ basic_collectd()
    if [ -z "$api_token" ]
       then
         #url to configure collectd asks for host-name and username:password
-        curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s --
+        curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s  -- ${installer_level}
+        #bash ./install.sh ${installer_level}
    else
        #url to configure collectd asks for host-name	
-       curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- -t "$api_token"
+       curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- ${installer_level} -t "$api_token"
+       #bash ./install.sh ${installer_level} -t "$api_token"
    fi
 }
 
@@ -183,7 +198,7 @@ install_debian_collectd_procedure() #install function for debian collectd
 
     #Adding signalfx repo
     printf "Getting SignalFx collectd package\n"
-    $sudo add-apt-repository -y ppa:signalfx/collectd-release
+    $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
 
     #Updating apt-get to reference the signalfx repo to install collectd
     printf "Updating apt-get to reference new SignalFx package\n"
@@ -229,13 +244,13 @@ case $hostOS in
         confirm
         install_rpm_collectd_procedure
     ;;
-    "Ubuntu 15.04" | "Ubuntu 14.04.1 LTS")
+    "Ubuntu 15.04"* | "Ubuntu 14.04"*)
         needed_package_name=software-properties-common
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_debian_collectd_procedure
     ;;
-    "Ubuntu 12.04")
+    "Ubuntu 12.04"* | "Ubuntu precise"*)
         needed_package_name=python-software-properties
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
