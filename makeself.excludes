@@ -1,3 +1,9 @@
+collectd.conf
+README.md
+install_collectd.sh
+collectd-package-install
+collectd-install.sh
+collectd-simple.sh
 .arcconfig
 .DS_Store
 .gitignore
