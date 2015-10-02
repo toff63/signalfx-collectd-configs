@@ -8,3 +8,4 @@ create_installer.sh
 makeself
 makeself-header.sh
 collectd-package-install.sh
+signalfx-configure-collectd.sh
