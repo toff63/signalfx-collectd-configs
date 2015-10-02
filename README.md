@@ -32,4 +32,5 @@ To release the configuration script *signalfx-configure-collectd.sh*:
  3. The git tag and release should both be title v\<version number\> e.g. v0.18 
  4. Document the changes in the release in the release notes
  5. Upload the *signalfx-configure-collectd.sh* you just created
- 6. Publish the release
+ 6. Upload *collectd-package-install* as well 
+ 7. Publish the release
