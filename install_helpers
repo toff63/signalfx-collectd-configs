@@ -59,3 +59,137 @@ find_collectd_ver() {
         exit 2;
     fi
 }
+
+
+#variables used
+selection=0
+needed_rpm=null_rpm_link
+needed_rpm_name=null_rpm_name
+needed_package_name=null_package_name
+
+#rpm file variables
+centos_7_rpm="SignalFx-collectd_plugin-RPMs-centos-7-${ver}-latest.noarch.rpm"
+centos_6_rpm="SignalFx-collectd_plugin-RPMs-centos-6-${ver}-latest.noarch.rpm"
+aws_linux_2014_09_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2014_09-${ver}-latest.noarch.rpm"
+aws_linux_2015_03_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2015_03-${ver}-latest.noarch.rpm"
+
+#download location variables
+centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${ver}/${centos_7_rpm}"
+centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${ver}/${centos_6_rpm}"
+aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${ver}/${aws_linux_2014_09_rpm}"
+aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${ver}/${aws_linux_2015_03_rpm}"
+
+#determine hostOS for newer versions of Linux
+hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
+if [ ! -f /etc/redhat-release ]
+   then
+      hostOS_2=null_os
+   else
+   	  #older versions of RPM based Linux that don't have version in PRETTY_NAME format
+      hostOS_2=$(head -c 16 /etc/redhat-release)
+fi
+
+#determine if the script is being run by root or not
+user=$(whoami)
+if [ "$user" == "root" ]; then
+    sudo=""
+else
+    sudo="sudo"
+fi
+
+#RPM Based Linux Functions
+#Install function for RPM collectd
+install_rpm_plugin_procedure()
+{
+    #download signalfx plugin rpm for collectd
+    printf "Downloading SignalFx plugin RPM\n"
+    curl $needed_rpm -o $needed_rpm_name
+
+    #install signalfx rpm for collectd
+    printf "Installing SignalFx plugin RPM\n"
+    $sudo yum -y install $needed_rpm_name
+
+    #install collectd from signalfx plugin rpm
+    printf "Installing signalfx-collectd-plugin\n"
+    $sudo yum -y install signalfx-collectd-plugin
+    FOUND=1
+}
+
+install_plugin() {
+if [ -f /opt/signalfx-collectd-plugin/signalfx_metadata.py ]; then
+  printf "SignalFx collectd plugin already installed\n"
+  return
+fi
+
+#take "hostOS" and match it up to OS and assign tasks
+case $hostOS in
+    "CentOS Linux 7")
+	needed_rpm=$centos_7
+	needed_rpm_name=$centos_7_rpm
+	printf "Install will proceed for %s\n" "$hostOS"
+	install_rpm_plugin_procedure
+    ;;
+    "CentOS Linux 6")
+	needed_rpm=$centos_6
+	needed_rpm_name=$centos_6_rpm
+	printf "Install will proceed for %s\n" "$hostOS"
+	install_rpm_plugin_procedure
+    ;;
+    "Amazon Linux AMI 2014.09")
+	needed_rpm=$aws_linux_2014_09
+	needed_rpm_name=$aws_linux_2014_09_rpm
+	printf "Install will proceed for %s\n" "$hostOS"
+	install_rpm_plugin_procedure
+    ;;
+    "Amazon Linux AMI 2015.03")
+	needed_rpm=$aws_linux_2015_03
+	needed_rpm_name=$aws_linux_2015_03_rpm
+	printf "Install will proceed for %s\n" "$hostOS"
+	install_rpm_plugin_procedure
+    ;;
+    *)
+    case $hostOS_2 in
+	"CentOS release 6")
+	    needed_rpm=$centos_6
+	    needed_rpm_name=$centos_6_rpm
+	    printf "Install will proceed for %s\n" "$hostOS_2"
+	    install_rpm_plugin_procedure
+	;;
+	*)
+	;;
+    esac
+    ;;
+esac
+if [[ "$hostOS" == "Ubuntu 14.04"* ]] || [[ "$hostOS" == "Ubuntu 15.04"* ]]; then
+    needed_package_name=software-properties-common
+    printf "Install will proceed for %s\n" "$hostOS"
+    install_debian_collectd_procedure
+elif [[ "$hostOS" == "Ubuntu 12.04"* ]] || [[ "$hostOS" == "Ubuntu precise"* ]]; then
+    needed_package_name=python-software-properties
+    printf "Install will proceed for %s\n" "$hostOS"
+    install_debian_collectd_procedure
+fi
+if [ -z "$FOUND" ]; then
+    printf "Unsupported OS, will not attempt to install plugin\n"
+    NO_PLUGIN=1
+fi
+}
+
+#Debian Based Linux Functions
+#Install function for debian based systems
+install_debian_collectd_procedure() #install function for debian collectd
+{
+    #Adding signalfx repo
+    printf "Getting SignalFx collectd plugin\n"
+    $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${ver}
+
+    #Updating apt-get to reference the signalfx repo to install plugin
+    printf "Updating apt-get to reference new SignalFx plugin package\n"
+    $sudo apt-get -y update
+
+    #Installing signalfx collectd package and plugins
+    printf "Installing collectd and additional plugins\n"
+    $sudo apt-get -y install signalfx-collectd-plugin
+    FOUND=1
+}
+
