@@ -110,7 +110,7 @@ usage(){
 
 parse_args(){
     SFX_INGEST_URL="https://ingest.signalfx.com"
-    ver=release
+    release_type=release
     while getopts ":s:t:u:o:H:hbTa:i:" opt; do
         case "$opt" in
            s)
@@ -130,11 +130,11 @@ parse_args(){
            h)
                usage 0; ;;
            b)
-               ver=beta
+               release_type=beta
                source "${SCRIPT_DIR}/install_helpers"
                ;;
            T)
-               ver=test
+               release_type=test
                source "${SCRIPT_DIR}/install_helpers"
                ;;
            \?) echo "Invalid option: -$OPTARG" >&2;
