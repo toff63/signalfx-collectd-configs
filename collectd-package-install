@@ -25,12 +25,14 @@ centos_7_rpm="SignalFx-collectd-RPMs-centos-7-${stage}-latest.noarch.rpm"
 centos_6_rpm="SignalFx-collectd-RPMs-centos-6-${stage}-latest.noarch.rpm"
 aws_linux_2014_09_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2014_09-${stage}-latest.noarch.rpm"
 aws_linux_2015_03_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2015_03-${stage}-latest.noarch.rpm"
+aws_linux_2015_09_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2015_09-${stage}-latest.noarch.rpm"
 
 #download location variables
 centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_7_rpm}"
 centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_6_rpm}"
 aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2014_09_rpm}"
 aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_03_rpm}"
+aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_09_rpm}"
 
 #determine hostOS for newer versions of Linux
 hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
@@ -78,24 +80,28 @@ assign_needed_os()
         2)
             hostOS="CentOS Linux 6"
         ;;
-        #Amazon Linux 2015.03
+        #Amazon Linux 2015.09
         3)
+            hostOS="Amazon Linux AMI 2015.09"
+        ;;
+        #Amazon Linux 2015.03
+        4)
             hostOS="Amazon Linux AMI 2015.03"
         ;;
         #Amazon Linux 2014.09
-        4)
+        5)
             hostOS="Amazon Linux AMI 2014.09"
         ;;
         #Ubuntu 15.04
-        5)
+        6)
             hostOS="Ubuntu 15.04"
         ;;
         #Ubuntu 14.04
-        6)
+        7)
             hostOS="Ubuntu 14.04.1 LTS"
         ;;
         #Ubuntu 12.04
-        7)
+        8)
             hostOS="Ubuntu 12.04"
         ;;
         *)
@@ -107,7 +113,7 @@ assign_needed_os()
 #Validate the users input
 validate_os_input()
 {
-if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 7 ]]
+if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 8 ]]
     then
         assign_needed_os
 elif [ "$selection" == 8 ];
@@ -134,12 +140,13 @@ get_os_input()
 Please enter the number of the OS you wish to install for:
 1. RHEL/Centos 7
 2. RHEL/Centos 6.x
-3. Amazon Linux 2015.03
-4. Amazon Linux 2014.09
-5. Ubuntu 15.04
-6. Ubuntu 14.04
-7. Ubuntu 12.04
-8. Other 
+3. Amazon Linux 2015.09
+4. Amazon Linux 2015.03
+5. Amazon Linux 2014.09
+6. Ubuntu 15.04
+7. Ubuntu 14.04
+8. Ubuntu 12.04
+9. Other 
 0. Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
@@ -240,6 +247,13 @@ case $hostOS in
     "Amazon Linux AMI 2015.03")
         needed_rpm=$aws_linux_2015_03
         needed_rpm_name=$aws_linux_2015_03_rpm
+        printf "Install will proceed for %s\n" "$hostOS"
+        confirm
+        install_rpm_collectd_procedure
+    ;;
+    "Amazon Linux AMI 2015.09")
+        needed_rpm=$aws_linux_2015_09
+        needed_rpm_name=$aws_linux_2015_09_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure

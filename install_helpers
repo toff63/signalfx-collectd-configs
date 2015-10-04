@@ -73,12 +73,14 @@ determine_os() {
     centos_6_rpm="SignalFx-collectd_plugin-RPMs-centos-6-${release_type}-latest.noarch.rpm"
     aws_linux_2014_09_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2014_09-${release_type}-latest.noarch.rpm"
     aws_linux_2015_03_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2015_03-${release_type}-latest.noarch.rpm"
+    aws_linux_2015_09_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2015_09-${release_type}-latest.noarch.rpm"
 
     #download location variables
     centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_7_rpm}"
     centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_6_rpm}"
     aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2014_09_rpm}"
     aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_03_rpm}"
+    aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_09_rpm}"
 
     #determine hostOS for newer versions of Linux
     hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
@@ -151,7 +153,13 @@ install_plugin() {
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
-	*)
+	"Amazon Linux AMI 2015.09")
+	    needed_rpm=$aws_linux_2015_09
+	    needed_rpm_name=$aws_linux_2015_09_rpm
+	    printf "Install will proceed for %s\n" "$hostOS"
+	    install_rpm_plugin_procedure
+	    ;;
+        *)
 	    case $hostOS_2 in
 		"CentOS release 6")
 		    needed_rpm=$centos_6
