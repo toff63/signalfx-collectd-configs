@@ -3,6 +3,8 @@ before_install:
 install:
   - sudo mkdir -p /etc/collectd/managed_config
   - sudo cp managed_config/* /etc/collectd/managed_config/
+  - sudo mkdir -p /etc/collectd/filtering_config
+  - sudo cp filtering_config/* /etc/collectd/filtering_config/
   - sudo cp collectd.conf /etc/collectd/collectd.conf
   - sudo cp signalfx_types_db /etc/collectd
   - sudo sed -i -e "s#/etc/collectd.d/#/etc/collectd/#" /etc/collectd/collectd.conf
