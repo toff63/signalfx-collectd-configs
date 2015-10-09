@@ -35,6 +35,7 @@ get_collectd_config() {
     fi
 
 	 COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
+	 COLLECTD_FILTERING_CONFIG_DIR=${COLLECTD_ETC}/filtering_config
     printf "Getting TypesDB default value..."
     if [ -x /usr/bin/strings ]; then
         TYPESDB=$(strings "${COLLECTD}" | grep /types.db)
@@ -165,6 +166,15 @@ install_config(){
     check_for_err "Success\n"
 }
 
+install_filters() {
+    printf "Installing filtering configs\n"
+    for i in `ls -1 ${FILTERING_CONF_DIR}`
+    do
+     cp "${FILTERING_CONF_DIR}/$i" "${COLLECTD_FILTERING_CONFIG_DIR}/"
+     check_for_err  "Instaiilng $i - Success\n"
+    done
+
+}
 check_for_aws() {
     printf "Checking to see if this box is in AWS: "
     AWS_UNIQUE_ID=$(${SCRIPT_DIR}/get_aws_unique_id)
@@ -227,6 +237,7 @@ copy_configs(){
         install_config 10-aggregation-cpu.conf "CPU Aggregation Plugin"
     fi
     install_write_http_plugin
+    install_filters
 }
 
 verify_configs(){
@@ -253,6 +264,10 @@ main() {
     mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success\n";
 
+    printf "Making managed filtering config dir %s ..." "${COLLECTD_FILTERING_CONFIG_DIR}"
+    mkdir -p "${COLLECTD_FILTERING_CONFIG_DIR}"
+    check_for_err "Success\n";
+
     if [ -e "${COLLECTD_CONFIG}" ]; then
         printf "Backing up %s: " "${COLLECTD_CONFIG}";
         _bkupname=${COLLECTD_CONFIG}.$(date +"%Y-%m-%d-%T");
@@ -264,6 +279,7 @@ main() {
         -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
         -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
         -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
+        -e "s#%%%COLLECTDFILTERINGCONFIG%%%#${COLLECTD_FILTERING_CONFIG_DIR}#" \
         -e "s#%%%LOGTO%%%#${LOGTO}#" \
         "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
     check_for_err "Success\n"
@@ -287,6 +303,7 @@ main() {
 
 BASE_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
 MANAGED_CONF_DIR=${BASE_DIR}/managed_config
+FILTERING_CONF_DIR=${BASE_DIR}/filtering_config
 
 parse_args "$@"
 main
