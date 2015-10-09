@@ -116,7 +116,7 @@ validate_os_input()
 if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 8 ]]
     then
         assign_needed_os
-elif [ "$selection" == 8 ];
+elif [ "$selection" == 9 ];
     then
         printf "\nWe currently do not support any other Linux distribution with our collectd packages.
 Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
@@ -125,7 +125,7 @@ elif [ "$selection" == 0 ];
     then
         printf "\nGood Bye!" && exit 0
 else
-    printf "\nInvalid user input please make a selection of 1 through 8.
+    printf "\nInvalid user input please make a Distribution selection of 1 through 8.
 Enter your Selection: "
     read -r selection < /dev/tty
     validate_os_input
