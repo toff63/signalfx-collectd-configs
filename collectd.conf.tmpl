@@ -87,8 +87,9 @@ LoadPlugin vmem
 
 LoadPlugin uptime
 
-Include "%%%COLLECTDFILTERINGCONFIG%%%/*.conf"
-
 # Note: You will get warnings on startup if you have no *.conf files.
 #       This is ok: CollectD will still start.
 Include "%%%COLLECTDMANAGEDCONFIG%%%/*.conf"
+
+Include "%%%COLLECTDFILTERINGCONFIG%%%/*.conf"
+
