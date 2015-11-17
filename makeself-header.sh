@@ -457,6 +457,16 @@ if test -n "\$leftspace"; then
     fi
 fi
 
+noexec=\`mount | grep "on "\\\`df -k \$tmpdir | tail -1 | awk '{print \$6}'\\\`" " | grep noexec\`
+if test -n "\$noexec"; then
+	echo
+	echo ""\`dirname \$tmpdir\`" is mounted NOEXEC and it is necessary to execute a shell script we have unpacked." >&2
+	if test "\$keep" = n; then
+	    echo "Consider setting TMPDIR to a directory with executable privileges."
+	fi
+	eval \$finish; exit 1
+fi
+
 for s in \$filesizes
 do
     if MS_dd_Progress "\$0" \$offset \$s | eval "$GUNZIP_CMD" | ( cd "\$tmpdir"; UnTAR x ) 1>/dev/null; then
