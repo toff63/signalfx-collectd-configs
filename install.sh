@@ -246,6 +246,32 @@ verify_configs(){
     echo "All good"
 }
 
+check_with_user_and_stop_other_collectd_instances(){
+    count_running_collectd_instances=$(pgrep -x collectd | wc -l)
+    if [ $count_running_collectd_instances -ne 0 ]; then
+        PROCEED_STATUS=0
+        printf "Currently, $count_running_collectds more instances of collectd are running on this machine\n"
+        printf "Do you want to\n"
+        printf "1. Stop here and check\n"
+        printf "2. Stop all running instances of collectd and start a new one\n"
+        printf "3. Start this along with others\n"
+        while [[ ! ( $PROCEED_STATUS -eq 1 || $PROCEED_STATUS -eq 2 || $PROCEED_STATUS -eq 3 ) ]]; do
+            read -p "Choose an option(1/2/3): " PROCEED_STATUS < /dev/tty
+        done
+        case $PROCEED_STATUS in
+            1)
+                echo "Check and come back. Exiting for now..."
+                exit 0;
+                ;;
+            2)
+                echo "Stopping all running collectd instances..."
+                pkill -x collectdmon > /dev/null 2>&1
+                pkill -x collectd > /dev/null 2>&1 # centos does not have collectdmon
+                ;;
+        esac
+    fi
+}
+
 
 main() {
     get_collectd_config
@@ -292,11 +318,20 @@ main() {
     copy_configs
     verify_configs
 
+    # Stop running Collectd
+    echo "Stopping collectd"
+    if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
+        service collectd stop
+    else
+        pkill -nx collectd # stops the newest (most recently started) collectd similar to 'service collectd stop'
+    fi
+
+    check_with_user_and_stop_other_collectd_instances
+
     echo "Starting collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
-        service collectd restart
+        service collectd start
     else
-        killall "${COLLECTD}"
         ${COLLECTD}
     fi
 }
