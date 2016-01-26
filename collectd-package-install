@@ -34,6 +34,11 @@ aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_lin
 aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_03_rpm}"
 aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_09_rpm}"
 
+#ppa locations for wheezy and jessie
+signalfx_public_key_id="185894C15AE495F6"
+wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
+jessie_ppa="https://dl.signalfx.com/debs/collectd/jessie/${stage}"
+
 #determine hostOS for newer versions of Linux
 hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
 if [ ! -f /etc/redhat-release ]
@@ -104,6 +109,14 @@ assign_needed_os()
         8)
             hostOS="Ubuntu 12.04"
         ;;
+        #Debian GNU/Linux 7 (wheezy) 
+        9)
+            hostOS="Debian GNU/Linux 7"
+        ;;
+        #Debian GNU/Linux 8 (jessie)
+        10)
+            hostOS="Debian GNU/Linux 8"
+        ;;
         *)
         printf "error occurred. Exiting. Please contact support@signalfx.com\n" && exit 0
         ;;
@@ -113,10 +126,10 @@ assign_needed_os()
 #Validate the users input
 validate_os_input()
 {
-if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 8 ]]
+if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 10 ]]
     then
         assign_needed_os
-elif [ "$selection" == 9 ];
+elif [ "$selection" == 11 ];
     then
         printf "\nWe currently do not support any other Linux distribution with our collectd packages.
 Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
@@ -146,7 +159,9 @@ Please enter the number of the OS you wish to install for:
 6. Ubuntu 15.04
 7. Ubuntu 14.04
 8. Ubuntu 12.04
-9. Other 
+9. Debian GNU/Linux 7
+10. Debian GNU/Linux 8
+11. Other 
 0. Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
@@ -205,7 +220,12 @@ install_debian_collectd_procedure() #install function for debian collectd
 
     #Adding signalfx repo
     printf "Getting SignalFx collectd package\n"
-    $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
+    if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+        $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
+        echo "deb ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd.list
+    else
+        $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
+    fi
 
     #Updating apt-get to reference the signalfx repo to install collectd
     printf "Updating apt-get to reference new SignalFx package\n"
@@ -268,6 +288,22 @@ case $hostOS in
         needed_package_name=python-software-properties
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
+        install_debian_collectd_procedure
+    ;;
+    "Debian GNU/Linux 7")
+        needed_package_name="apt-transport-https"
+        printf "Install will proceed for %s\n" "$hostOS"
+        confirm
+        debian_distribution_name="wheezy"
+        repo_link=$wheezy_ppa
+        install_debian_collectd_procedure
+    ;;
+    "Debian GNU/Linux 8")
+        needed_package_name="apt-transport-https"
+        printf "Install will proceed for %s\n" "$hostOS"
+        confirm
+        debian_distribution_name="jessie"
+        repo_link=$jessie_ppa
         install_debian_collectd_procedure
     ;;
     *)

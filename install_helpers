@@ -82,6 +82,11 @@ determine_os() {
     aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_03_rpm}"
     aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_09_rpm}"
 
+    #ppa locations for wheezy and jessie
+    signalfx_public_key_id="185894C15AE495F6"
+    wheezy_ppa="https://dl.signalfx.com/debs/signalfx-collectd-plugin/wheezy/${release_type}"
+    jessie_ppa="https://dl.signalfx.com/debs/signalfx-collectd-plugin/jessie/${release_type}"
+
     #determine hostOS for newer versions of Linux
     hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
     if [ ! -f /etc/redhat-release ]
@@ -126,7 +131,7 @@ install_plugin() {
     fi
 
     determine_os
-
+    
     #take "hostOS" and match it up to OS and assign tasks
     case $hostOS in
 	"CentOS Linux 7")
@@ -159,6 +164,20 @@ install_plugin() {
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
+        "Debian GNU/Linux 7")
+            needed_package_name="apt-transport-https"
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="wheezy"
+            repo_link=$wheezy_ppa
+            install_debian_collectd_procedure
+            ;;
+        "Debian GNU/Linux 8")
+            needed_package_name="apt-transport-https"
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="jessie"
+            repo_link=$jessie_ppa
+            install_debian_collectd_procedure
+            ;;
         *)
 	    case $hostOS_2 in
 		"CentOS release 6")
@@ -194,10 +213,15 @@ install_debian_collectd_procedure()
     #Installing dependent packages to later add signalfx plugin repo
     printf "Installing source package to get SignalFx collectd plugin package\n"
     $sudo apt-get -y install $needed_package_name
-
+    
     #Adding signalfx repo
     printf "Getting SignalFx collectd plugin\n"
-    $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
+    if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+        $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
+        $sudo echo "deb ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd_plugin.list
+    else
+        $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
+    fi
 
     #Updating apt-get to reference the signalfx repo to install plugin
     printf "Updating apt-get to reference new SignalFx plugin package\n"
