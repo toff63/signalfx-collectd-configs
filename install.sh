@@ -283,7 +283,7 @@ main() {
     fi
     okay_ver=$(vercomp "$COLLECTD_VER" 5.5.0)
     if [ "$okay_ver" != 2 ]; then
-        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true"
+        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true\\nFlushInterval 10\\nFlushTimeout 2"
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
