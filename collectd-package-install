@@ -3,21 +3,60 @@
 #variables used
 selection=0
 needed_rpm=null_rpm_link
+needed_deps="tar curl"
 needed_rpm_name=null_rpm_name
 needed_package_name=null_package_name
-api_token=$1
-stage=$2 # Defaults to release. Enter --beta or --test as appropriate
-
+stage=release
 installer_level=""
-#determine the stage (release, beta or test) of collectd to be installed
-if [ "$stage" == "--beta" ]; then
-    stage="beta"
-    installer_level="-b"
-elif [ "$stage" == "--test" ]; then
-    stage="test"
-    installer_level="-T"
-else
-    stage="release"
+interactive=1
+source_type="-s dns"
+name=collectd_package_install
+debian_distribution_name=""
+
+usage() {
+    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -h ] [ -y ]"
+    echo " -y makes the operation non-interactive. api_token is required."
+    echo " -H <hostname> will set the collectd hostname to <hostname> instead of what dns says."
+    echo " --beta will use the beta repos instead of release."
+    echo " --test will use the test repos instead of release."
+    echo " -h this page."
+    exit $1
+}
+
+parse_args(){
+    while [ $# -gt 0 ]; do
+        case $1 in
+           -y)
+              interactive=0; shift 1 ;;
+           --beta)
+              stage=beta
+              installer_level="-b" ; shift 1 ;;
+           --test)
+              stage=test
+              installer_level="-T" ; shift 1 ;;
+           -H)
+              source_type="-s input -H $2"; shift 2 ;;
+           -h)
+               usage 0; ;;
+           \?) echo "Invalid option: -$1" >&2;
+               exit 2;
+               ;;
+           *) break ;;
+       esac
+    done
+}
+
+if [ "$1" = "-h" ]; then
+    usage 0
+fi
+
+if [ "$#" -gt 0 ]; then
+    api_token="-t $1"
+    shift
+fi
+
+if [ "$#" -gt 0 ]; then
+    parse_args "$@"
 fi
 
 #rpm file variables
@@ -61,16 +100,7 @@ fi
 basic_collectd()
 {
    printf "Starting Configuration of collectd... \n"
-   if [ -z "$api_token" ]
-      then
-        #url to configure collectd asks for host-name and username:password
-        curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s  -- ${installer_level}
-        #bash ./install.sh ${installer_level}
-   else
-       #url to configure collectd asks for host-name	
-       curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- ${installer_level} -t "$api_token"
-       #bash ./install.sh ${installer_level} -t "$api_token"
-   fi
+   curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- ${source_type} ${installer_level} ${api_token}
 }
 
 #Function to determine the OS to install for from end user input
@@ -173,6 +203,7 @@ Enter your Selection: "
 #confirm user input (yes or no)
 confirm ()
 {
+    [ $interactive -eq 0 ] && return
     read -r -p "Is this correct? [y/N] " response < /dev/tty
     if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]
         then
@@ -186,6 +217,9 @@ confirm ()
 #Install function for RPM collectd
 install_rpm_collectd_procedure()
 {
+    #install deps
+    printf "Installing Dependencies\n"
+    $sudo yum -y install $needed_deps
 
     #download signalfx rpm for collectd
     printf "Downloading SignalFx RPM\n"
@@ -213,18 +247,26 @@ install_debian_collectd_procedure() #install function for debian collectd
     #update apt-get
     printf "Updating apt-get\n"
     $sudo apt-get -y update
+    if [ "$stage" = "test" ]; then
+        needed_deps="$needed_deps apt-transport-https"
+    fi
 
     #Installing dependent packages to later add signalfx repo
     printf "Installing source package to get SignalFx collectd package\n"
-    $sudo apt-get -y install $needed_package_name
+    $sudo apt-get -y install $needed_deps $needed_package_name
 
-    #Adding signalfx repo
-    printf "Getting SignalFx collectd package\n"
-    if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
-        $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
-        echo "deb ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd.list
+    if [ "$stage" = "test" ]; then
+        printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
+        echo "deb [trusted=yes] https://dl.signalfx.com/debs/collectd/${debian_distribution_name}/${stage} /" > /etc/apt/sources.list.d/signalfx_collectd-${stage}-${debian_distribution_name}.list
     else
-        $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
+        #Adding signalfx repo
+        printf "Getting SignalFx collectd package\n"
+        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+            $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
+            echo "deb ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd.list
+        else
+            $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
+        fi
     fi
 
     #Updating apt-get to reference the signalfx repo to install collectd
@@ -278,32 +320,41 @@ case $hostOS in
         confirm
         install_rpm_collectd_procedure
     ;;
-    "Ubuntu 15.04"* | "Ubuntu 14.04"*)
+    "Ubuntu 15.04"*)
         needed_package_name=software-properties-common
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
+        debian_distribution_name="vivid"
+        install_debian_collectd_procedure
+    ;;
+    "Ubuntu 14.04"*)
+        needed_package_name=software-properties-common
+        printf "Install will proceed for %s\n" "$hostOS"
+        confirm
+        debian_distribution_name="trusty"
         install_debian_collectd_procedure
     ;;
     "Ubuntu 12.04"* | "Ubuntu precise"*)
         needed_package_name=python-software-properties
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
+        debian_distribution_name="precise"
         install_debian_collectd_procedure
     ;;
     "Debian GNU/Linux 7")
         needed_package_name="apt-transport-https"
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
-        debian_distribution_name="wheezy"
         repo_link=$wheezy_ppa
+        debian_distribution_name="wheezy"
         install_debian_collectd_procedure
     ;;
     "Debian GNU/Linux 8")
         needed_package_name="apt-transport-https"
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
-        debian_distribution_name="jessie"
         repo_link=$jessie_ppa
+        debian_distribution_name="jessie"
         install_debian_collectd_procedure
     ;;
     *)
