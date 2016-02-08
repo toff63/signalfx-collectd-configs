@@ -9,13 +9,13 @@ needed_package_name=null_package_name
 stage=release
 installer_level=""
 interactive=1
-source_type="-s dns"
+source_type=""
 name=collectd_package_install
 debian_distribution_name=""
 
 usage() {
     echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -h ] [ -y ]"
-    echo " -y makes the operation non-interactive. api_token is required."
+    echo " -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set"
     echo " -H <hostname> will set the collectd hostname to <hostname> instead of what dns says."
     echo " --beta will use the beta repos instead of release."
     echo " --test will use the test repos instead of release."
@@ -27,6 +27,7 @@ parse_args(){
     while [ $# -gt 0 ]; do
         case $1 in
            -y)
+              [ -z "$source_type" ] && source_type="-s dns"
               interactive=0; shift 1 ;;
            --beta)
               stage=beta
@@ -35,6 +36,7 @@ parse_args(){
               stage=test
               installer_level="-T" ; shift 1 ;;
            -H)
+              [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
               source_type="-s input -H $2"; shift 2 ;;
            -h)
                usage 0; ;;
