@@ -109,8 +109,10 @@ fi
 #Functions used throughout
 basic_collectd()
 {
-   printf "Starting Configuration of collectd... \n"
-   curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- ${source_type} ${installer_level} ${api_token}
+   options=" ${source_type} ${installer_level} ${api_token}"
+   printf "Starting Configuration of collectd... $options \n"
+
+   curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- $options
 }
 
 #Function to determine the OS to install for from end user input

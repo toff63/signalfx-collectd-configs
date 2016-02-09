@@ -217,8 +217,9 @@ install_debian_collectd_procedure()
     #Adding signalfx repo
     printf "Getting SignalFx collectd plugin\n"
     if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+        [ "$release_type" = "test" ] && trusted="[trusted=yes]"
         $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
-        $sudo echo "deb ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd_plugin.list
+        $sudo echo "deb $trusted ${repo_link} /" > /etc/apt/sources.list.d/signalfx_collectd_plugin.list
     else
         $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
     fi
