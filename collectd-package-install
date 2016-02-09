@@ -53,12 +53,20 @@ if [ "$1" = "-h" ]; then
 fi
 
 if [ "$#" -gt 0 ]; then
-    api_token="-t $1"
-    shift
+
+    if [ ! "`echo $1 | cut -c1`" = "-" ]; then
+        api_token="-t $1"
+        shift
+    fi
 fi
 
 if [ "$#" -gt 0 ]; then
     parse_args "$@"
+fi
+
+if [ $interactive -eq 0 ] && [ -z "$api_token" ]; then
+    echo "Non-interactive requires the api token"
+    usage -1
 fi
 
 #rpm file variables
