@@ -53,8 +53,8 @@ get_collectd_config() {
 
 get_source_config() {
     if [ -z "$SOURCE_TYPE" ]; then
-        echo "There are three ways to configure the source name to be used by collectd"
-        echo "when reporting metrics."
+        echo "There are two ways to configure the source name to be used by collectd"
+        echo "when reporting metrics:"
         echo "dns - Use the name of the host by resolving it in dns"
         echo "input - You can enter a hostname to use as the source name"
         echo
