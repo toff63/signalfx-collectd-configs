@@ -287,7 +287,7 @@ install_debian_collectd_procedure() #install function for debian collectd
 
     #Installing signalfx collectd package and plugins
     printf "Installing collectd and additional plugins\n"
-    $sudo apt-get -y install collectd
+    $sudo apt-get -y install collectd collectd-core
 
     #Configuring collectd with basic configuration
     basic_collectd
