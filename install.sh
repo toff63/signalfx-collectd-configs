@@ -53,8 +53,8 @@ get_collectd_config() {
 
 get_source_config() {
     if [ -z "$SOURCE_TYPE" ]; then
-        echo "There are three ways to configure the source name to be used by collectd"
-        echo "when reporting metrics."
+        echo "There are two ways to configure the source name to be used by collectd"
+        echo "when reporting metrics:"
         echo "dns - Use the name of the host by resolving it in dns"
         echo "input - You can enter a hostname to use as the source name"
         echo
@@ -283,7 +283,7 @@ main() {
     fi
     okay_ver=$(vercomp "$COLLECTD_VER" 5.5.0)
     if [ "$okay_ver" != 2 ]; then
-        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true"
+        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true\\nFlushInterval 10\\nFlushTimeout 2"
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
