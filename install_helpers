@@ -69,18 +69,12 @@ determine_os() {
     needed_package_name=null_package_name
 
     #rpm file variables
-    centos_7_rpm="SignalFx-collectd_plugin-RPMs-centos-7-${release_type}-latest.noarch.rpm"
-    centos_6_rpm="SignalFx-collectd_plugin-RPMs-centos-6-${release_type}-latest.noarch.rpm"
-    aws_linux_2014_09_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2014_09-${release_type}-latest.noarch.rpm"
-    aws_linux_2015_03_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2015_03-${release_type}-latest.noarch.rpm"
-    aws_linux_2015_09_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux_2015_09-${release_type}-latest.noarch.rpm"
+    centos_rpm="SignalFx-collectd_plugin-RPMs-centos-${release_type}-latest.noarch.rpm"
+    aws_linux_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux-${release_type}-latest.noarch.rpm"
 
     #download location variables
-    centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_7_rpm}"
-    centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_6_rpm}"
-    aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2014_09_rpm}"
-    aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_03_rpm}"
-    aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_2015_09_rpm}"
+    centos="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_rpm}"
+    aws_linux="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_rpm}"
 
     #ppa locations for wheezy and jessie
     signalfx_public_key_id="185894C15AE495F6"
@@ -135,32 +129,32 @@ install_plugin() {
     #take "hostOS" and match it up to OS and assign tasks
     case $hostOS in
 	"CentOS Linux 7")
-	    needed_rpm=$centos_7
-	    needed_rpm_name=$centos_7_rpm
+	    needed_rpm=$centos
+	    needed_rpm_name=$centos_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
 	"CentOS Linux 6")
-	    needed_rpm=$centos_6
-	    needed_rpm_name=$centos_6_rpm
+	    needed_rpm=$centos
+	    needed_rpm_name=$centos_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
 	"Amazon Linux AMI 2014.09")
-	    needed_rpm=$aws_linux_2014_09
-	    needed_rpm_name=$aws_linux_2014_09_rpm
+	    needed_rpm=$aws_linux
+	    needed_rpm_name=$aws_linux_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
 	"Amazon Linux AMI 2015.03")
-	    needed_rpm=$aws_linux_2015_03
-	    needed_rpm_name=$aws_linux_2015_03_rpm
+	    needed_rpm=$aws_linux
+	    needed_rpm_name=$aws_linux_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
 	"Amazon Linux AMI 2015.09")
-	    needed_rpm=$aws_linux_2015_09
-	    needed_rpm_name=$aws_linux_2015_09_rpm
+	    needed_rpm=$aws_linux
+	    needed_rpm_name=$aws_linux_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
@@ -181,8 +175,8 @@ install_plugin() {
         *)
 	    case $hostOS_2 in
 		"CentOS release 6")
-		    needed_rpm=$centos_6
-		    needed_rpm_name=$centos_6_rpm
+		    needed_rpm=$centos
+		    needed_rpm_name=$centos_rpm
 		    printf "Install will proceed for %s\n" "$hostOS_2"
 		    install_rpm_plugin_procedure
 		    ;;

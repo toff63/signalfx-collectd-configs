@@ -12,6 +12,7 @@ interactive=1
 source_type=""
 name=collectd_package_install
 debian_distribution_name=""
+local=0
 
 usage() {
     echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -h ] [ -y ]"
@@ -35,6 +36,8 @@ parse_args(){
            --test)
               stage=test
               installer_level="-T" ; shift 1 ;;
+           --local)
+              local=1 ; shift 1 ;;
            -H)
               [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
               source_type="-s input -H $2"; shift 2 ;;
@@ -70,18 +73,12 @@ if [ $interactive -eq 0 ] && [ -z "$api_token" ]; then
 fi
 
 #rpm file variables
-centos_7_rpm="SignalFx-collectd-RPMs-centos-7-${stage}-latest.noarch.rpm"
-centos_6_rpm="SignalFx-collectd-RPMs-centos-6-${stage}-latest.noarch.rpm"
-aws_linux_2014_09_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2014_09-${stage}-latest.noarch.rpm"
-aws_linux_2015_03_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2015_03-${stage}-latest.noarch.rpm"
-aws_linux_2015_09_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux_2015_09-${stage}-latest.noarch.rpm"
+centos_rpm="SignalFx-collectd-RPMs-centos-${stage}-latest.noarch.rpm"
+aws_linux_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux-${stage}-latest.noarch.rpm"
 
 #download location variables
-centos_7="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_7_rpm}"
-centos_6="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_6_rpm}"
-aws_linux_2014_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2014_09_rpm}"
-aws_linux_2015_03="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_03_rpm}"
-aws_linux_2015_09="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_2015_09_rpm}"
+centos="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_rpm}"
+aws_linux="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_rpm}"
 
 #ppa locations for wheezy and jessie
 signalfx_public_key_id="185894C15AE495F6"
@@ -112,7 +109,12 @@ basic_collectd()
    options=" ${source_type} ${installer_level} ${api_token}"
    printf "Starting Configuration of collectd... $options \n"
 
-   curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- $options
+   if [ $local -eq 1 ]; then
+       printf "Running From Local Source...\n"
+       ./install.sh $options
+   else
+       curl -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- $options
+   fi
 }
 
 #Function to determine the OS to install for from end user input
@@ -234,12 +236,13 @@ install_rpm_collectd_procedure()
     $sudo yum -y install $needed_deps
 
     #download signalfx rpm for collectd
-    printf "Downloading SignalFx RPM\n"
+    printf "Downloading SignalFx RPM $needed_rpm\n"
     curl $needed_rpm -o $needed_rpm_name
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx RPM\n"
     $sudo yum -y install $needed_rpm_name
+    $sudo rm -f $needed_rpm_name
 
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
@@ -298,36 +301,36 @@ perform_install_for_os()
 {
 case $hostOS in
     "CentOS Linux 7")
-        needed_rpm=$centos_7
-        needed_rpm_name=$centos_7_rpm
+        needed_rpm=$centos
+        needed_rpm_name=$centos_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure
     ;;
     "CentOS Linux 6")
-        needed_rpm=$centos_6
-        needed_rpm_name=$centos_6_rpm
+        needed_rpm=$centos
+        needed_rpm_name=$centos_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure
     ;;
     "Amazon Linux AMI 2014.09")
-        needed_rpm=$aws_linux_2014_09
-        needed_rpm_name=$aws_linux_2014_09_rpm
+        needed_rpm=$aws_linux
+        needed_rpm_name=$aws_linux_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure
     ;;
     "Amazon Linux AMI 2015.03")
-        needed_rpm=$aws_linux_2015_03
-        needed_rpm_name=$aws_linux_2015_03_rpm
+        needed_rpm=$aws_linux
+        needed_rpm_name=$aws_linux_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure
     ;;
     "Amazon Linux AMI 2015.09")
-        needed_rpm=$aws_linux_2015_09
-        needed_rpm_name=$aws_linux_2015_09_rpm
+        needed_rpm=$aws_linux
+        needed_rpm_name=$aws_linux_rpm
         printf "Install will proceed for %s\n" "$hostOS"
         confirm
         install_rpm_collectd_procedure
@@ -372,8 +375,8 @@ case $hostOS in
     *)
     case $hostOS_2 in
         "CentOS release 6")
-            needed_rpm=$centos_6
-            needed_rpm_name=$centos_6_rpm
+            needed_rpm=$centos
+            needed_rpm_name=$centos_rpm
             printf "Install will proceed for %s\n" "$hostOS_2"
             confirm
             install_rpm_collectd_procedure
