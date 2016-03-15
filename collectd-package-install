@@ -243,6 +243,7 @@ install_rpm_collectd_procedure()
     printf "Installing SignalFx RPM\n"
     $sudo yum -y install $needed_rpm_name
     $sudo rm -f $needed_rpm_name
+    type setsebool > /dev/null 2>&1 && $sudo setsebool -P collectd_tcp_network_connect on
 
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
@@ -379,6 +380,12 @@ case $hostOS in
             needed_rpm_name=$centos_rpm
             printf "Install will proceed for %s\n" "$hostOS_2"
             confirm
+            install_rpm_collectd_procedure
+        ;;
+        "Red Hat Enterpri")
+            needed_rpm=$centos
+            needed_rpm_name=$centos_rpm
+            printf "Install will proceed for %s\n" "$hostOS"
             install_rpm_collectd_procedure
         ;;
         *)

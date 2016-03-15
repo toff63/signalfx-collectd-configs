@@ -111,6 +111,7 @@ install_rpm_plugin_procedure()
     #install signalfx rpm for collectd
     printf "Installing SignalFx plugin RPM\n"
     $sudo yum -y install $needed_rpm_name
+    $sudo rm -f $needed_rpm_name
 
     #install collectd from signalfx plugin rpm
     printf "Installing signalfx-collectd-plugin\n"
@@ -180,6 +181,12 @@ install_plugin() {
 		    printf "Install will proceed for %s\n" "$hostOS_2"
 		    install_rpm_plugin_procedure
 		    ;;
+	        "Red Hat Enterpri")
+	            needed_rpm=$centos
+	            needed_rpm_name=$centos_rpm
+	            printf "Install will proceed for %s\n" "$hostOS"
+	            install_rpm_plugin_procedure
+	            ;;
 		*)
 		    ;;
 	    esac
