@@ -59,6 +59,7 @@ if [ "$#" -gt 0 ]; then
 
     if [ ! "`echo $1 | cut -c1`" = "-" ]; then
         api_token="-t $1"
+        raw_api_token=$1
         shift
     fi
 fi
@@ -70,6 +71,15 @@ fi
 if [ $interactive -eq 0 ] && [ -z "$api_token" ]; then
     echo "Non-interactive requires the api token"
     usage -1
+fi
+
+if [ -n "$api_token" ]; then
+    api_output=`curl -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST https://ingest.signalfx.com/v2/event 2>/dev/null`
+    if [ ! "$api_output" = "\"OK\"" ]; then
+        echo "There was a problem with the api token '$raw_api_token' passed in and we were unable to communicate with SignalFx: $api_output"
+        echo "Please check your auth token is valid or check your networking."
+        exit 1
+    fi
 fi
 
 #rpm file variables
