@@ -76,10 +76,7 @@ determine_os() {
     centos="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${centos_rpm}"
     aws_linux="https://dl.signalfx.com/rpms/SignalFx-rpms/${release_type}/${aws_linux_rpm}"
 
-    #ppa locations for wheezy and jessie
     signalfx_public_key_id="185894C15AE495F6"
-    wheezy_ppa="https://dl.signalfx.com/debs/signalfx-collectd-plugin/wheezy/${release_type}"
-    jessie_ppa="https://dl.signalfx.com/debs/signalfx-collectd-plugin/jessie/${release_type}"
 
     #determine hostOS for newer versions of Linux
     hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
@@ -159,20 +156,36 @@ install_plugin() {
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
-        "Debian GNU/Linux 7")
-            needed_package_name="apt-transport-https"
-            printf "Install will proceed for %s\n" "$hostOS"
-            debian_distribution_name="wheezy"
-            repo_link=$wheezy_ppa
-            install_debian_collectd_procedure
-            ;;
-        "Debian GNU/Linux 8")
-            needed_package_name="apt-transport-https"
-            printf "Install will proceed for %s\n" "$hostOS"
-            debian_distribution_name="jessie"
-            repo_link=$jessie_ppa
-            install_debian_collectd_procedure
-            ;;
+    "Debian GNU/Linux 7")
+        needed_package_name="apt-transport-https"
+        printf "Install will proceed for %s\n" "$hostOS"
+        debian_distribution_name="wheezy"
+        install_debian_collectd_procedure
+        ;;
+    "Debian GNU/Linux 8")
+        needed_package_name="apt-transport-https"
+        printf "Install will proceed for %s\n" "$hostOS"
+        debian_distribution_name="jessie"
+        install_debian_collectd_procedure
+        ;;
+    "Ubuntu 15.04"*)
+        needed_package_name=software-properties-common
+        printf "Install will proceed for %s\n" "$hostOS"
+        debian_distribution_name="vivid"
+        install_debian_collectd_procedure
+    ;;
+    "Ubuntu 14.04"*)
+        needed_package_name=software-properties-common
+        printf "Install will proceed for %s\n" "$hostOS"
+        debian_distribution_name="trusty"
+        install_debian_collectd_procedure
+    ;;
+    "Ubuntu 12.04"* | "Ubuntu precise"*)
+        needed_package_name=python-software-properties
+        printf "Install will proceed for %s\n" "$hostOS"
+        debian_distribution_name="precise"
+        install_debian_collectd_procedure
+    ;;
         *)
 	    case $hostOS_2 in
 		"CentOS release 6")
@@ -181,26 +194,17 @@ install_plugin() {
 		    printf "Install will proceed for %s\n" "$hostOS_2"
 		    install_rpm_plugin_procedure
 		    ;;
-	        "Red Hat Enterpri")
-	            needed_rpm=$centos
-	            needed_rpm_name=$centos_rpm
-	            printf "Install will proceed for %s\n" "$hostOS"
-	            install_rpm_plugin_procedure
-	            ;;
+        "Red Hat Enterpri")
+            needed_rpm=$centos
+            needed_rpm_name=$centos_rpm
+            printf "Install will proceed for %s\n" "$hostOS"
+            install_rpm_plugin_procedure
+            ;;
 		*)
 		    ;;
 	    esac
 	    ;;
     esac
-    if [[ "$hostOS" == "Ubuntu 14.04"* ]] || [[ "$hostOS" == "Ubuntu 15.04"* ]]; then
-	needed_package_name=software-properties-common
-	printf "Install will proceed for %s\n" "$hostOS"
-	install_debian_collectd_procedure
-    elif [[ "$hostOS" == "Ubuntu 12.04"* ]] || [[ "$hostOS" == "Ubuntu precise"* ]]; then
-	needed_package_name=python-software-properties
-	printf "Install will proceed for %s\n" "$hostOS"
-	install_debian_collectd_procedure
-    fi
     if [ -z "$FOUND" ]; then
 	printf "Unsupported OS, will not attempt to install plugin\n"
 	NO_PLUGIN=1
@@ -214,16 +218,22 @@ install_debian_collectd_procedure()
     #Installing dependent packages to later add signalfx plugin repo
     printf "Installing source package to get SignalFx collectd plugin package\n"
     $sudo apt-get -y install $needed_package_name
-    
-    #Adding signalfx repo
-    printf "Getting SignalFx collectd plugin\n"
-    if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
-        [ "$release_type" = "test" ] && trusted="[trusted=yes]"
-        $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
-        echo "deb $trusted ${repo_link} /" | $sudo tee --append /etc/apt/sources.list.d/signalfx_collectd_plugin.list > /dev/null
+
+    repo_link="https://dl.signalfx.com/debs/signalfx-collectd-plugin/${debian_distribution_name}/${release_type}"
+    if [ "$release_type" = "test" ]; then
+        printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
+        echo "deb [trusted=yes] ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${release_type}-${debian_distribution_name}.list > /dev/null
     else
-        $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
+        #Adding signalfx repo
+        printf "Getting SignalFx collectd package\n"
+        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+            $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
+            echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${release_type}-${debian_distribution}.list > /dev/null
+        else
+            $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
+        fi
     fi
+
 
     #Updating apt-get to reference the signalfx repo to install plugin
     printf "Updating apt-get to reference new SignalFx plugin package\n"

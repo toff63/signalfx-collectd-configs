@@ -283,13 +283,13 @@ install_debian_collectd_procedure() #install function for debian collectd
 
     if [ "$stage" = "test" ]; then
         printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
-        echo "deb [trusted=yes] https://dl.signalfx.com/debs/collectd/${debian_distribution_name}/${stage} /" | $sudo tee --append /etc/apt/sources.list.d/signalfx_collectd-${stage}-${debian_distribution_name}.list > /dev/null
+        echo "deb [trusted=yes] https://dl.signalfx.com/debs/collectd/${debian_distribution_name}/${stage} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd-${stage}-${debian_distribution_name}.list > /dev/null
     else
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
         if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
-            echo "deb ${repo_link} /" | $sudo tee --append /etc/apt/sources.list.d/signalfx_collectd.list > /dev/null
+            echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd.list > /dev/null
         else
             $sudo add-apt-repository -y ppa:signalfx/collectd-${stage}
         fi
