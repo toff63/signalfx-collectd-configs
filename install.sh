@@ -279,11 +279,11 @@ main() {
     get_logfile
     okay_ver=$(vercomp "$COLLECTD_VER" 5.4.0)
     if [ "$okay_ver" != 2 ]; then
-        WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 2000000\\nWriteQueueLimitLow  1800000"
+        WRITE_QUEUE_CONFIG="WriteQueueLimitHigh 500000\\nWriteQueueLimitLow  400000"
     fi
     okay_ver=$(vercomp "$COLLECTD_VER" 5.5.0)
     if [ "$okay_ver" != 2 ]; then
-        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true\\nFlushInterval 10\\nFlushTimeout 2"
+        WRITE_QUEUE_CONFIG="$WRITE_QUEUE_CONFIG\\nCollectInternalStats true"
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
