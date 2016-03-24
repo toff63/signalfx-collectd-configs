@@ -13,11 +13,13 @@ source_type=""
 name=collectd_package_install
 debian_distribution_name=""
 local=0
+sfx_ingest_url="https://ingest.signalfx.com"
 
 usage() {
-    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -h ] [ -y ]"
+    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ -y ]"
     echo " -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set"
     echo " -H <hostname> will set the collectd hostname to <hostname> instead of what dns says."
+    echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
     echo " --beta will use the beta repos instead of release."
     echo " --test will use the test repos instead of release."
     echo " -h this page."
@@ -41,6 +43,9 @@ parse_args(){
            -H)
               [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
               source_type="-s input -H $2"; shift 2 ;;
+           -U)
+              [ -z "$2" ] && echo "Argument required for Ingest URL parameter." && usage -1
+              sfx_ingest_url="$2"; shift 2 ;;
            -h)
                usage 0; ;;
            \?) echo "Invalid option: -$1" >&2;
@@ -74,7 +79,7 @@ if [ $interactive -eq 0 ] && [ -z "$api_token" ]; then
 fi
 
 if [ -n "$api_token" ]; then
-    api_output=`curl -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST https://ingest.signalfx.com/v2/event 2>/dev/null`
+    api_output=`curl -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST $sfx_ingest_url/v2/event 2>/dev/null`
     if [ ! "$api_output" = "\"OK\"" ]; then
         echo "There was a problem with the api token '$raw_api_token' passed in and we were unable to communicate with SignalFx: $api_output"
         echo "Please check your auth token is valid or check your networking."
@@ -116,7 +121,7 @@ fi
 #Functions used throughout
 basic_collectd()
 {
-   options=" ${source_type} ${installer_level} ${api_token}"
+   options=" ${source_type} ${installer_level} ${api_token} -i ${sfx_ingest_url}"
    printf "Starting Configuration of collectd... $options \n"
 
    if [ $local -eq 1 ]; then
@@ -163,7 +168,7 @@ assign_needed_os()
         8)
             hostOS="Ubuntu 12.04"
         ;;
-        #Debian GNU/Linux 7 (wheezy) 
+        #Debian GNU/Linux 7 (wheezy)
         9)
             hostOS="Debian GNU/Linux 7"
         ;;
@@ -215,7 +220,7 @@ Please enter the number of the OS you wish to install for:
 8. Ubuntu 12.04
 9. Debian GNU/Linux 7
 10. Debian GNU/Linux 8
-11. Other 
+11. Other
 0. Exit
 Enter your Selection: "
 	read -r selection < /dev/tty

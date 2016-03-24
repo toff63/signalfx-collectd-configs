@@ -2,6 +2,7 @@
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
 source "${SCRIPT_DIR}/install_helpers"
+SFX_INGEST_URL="https://ingest.signalfx.com"
 
 get_logfile() {
     LOGTO="\"/var/log/signalfx-collectd.log\""
@@ -87,7 +88,7 @@ get_source_config() {
 
 usage(){
     echo "$0 [-s SOURCE_TYPE] [-t API_TOKEN] [-u SIGNALFX_USER]"
-    echo "   [-o SIGNALFX_ORG] [-H HOSTNAME] [/path/to/collectd]"
+    echo "   [-o SIGNALFX_ORG] [-H HOSTNAME] [-i SFX_INGEST_URL] [/path/to/collectd]"
     echo "Installs collectd.conf and configures it for talking to SignalFx."
     echo "Installs the SignalFx collectd plugin on supported oses.  If on an unknown os"
     echo "and the plugin is already present, will configure it."
@@ -98,6 +99,8 @@ usage(){
     echo "                    dns - use FQDN of the host as the Hostname"
     echo
     echo " -H HOSTNAME: The Hostname value to use if you selected hostname as your source_type"
+    echo
+    echo " -i SFX_INGEST_URL: The Ingest URL to be used. Defaults to ${SFX_INGEST_URL}"
     echo
     echo "  Configuring SignalFX access"
     echo "------------------------------"
@@ -110,7 +113,6 @@ usage(){
 }
 
 parse_args(){
-    SFX_INGEST_URL="https://ingest.signalfx.com"
     release_type=release
     while getopts ":s:t:u:o:H:hbTa:i:" opt; do
         case "$opt" in
@@ -221,7 +223,7 @@ install_signalfx_plugin() {
 }
 
 install_write_http_plugin(){
-    install_plugin_common 
+    install_plugin_common
 
     printf "Fixing write_http plugin configuration.."
     sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
