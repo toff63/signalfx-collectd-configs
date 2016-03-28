@@ -138,19 +138,7 @@ install_plugin() {
 	    printf "Install will proceed for %s\n" "$hostOS"
 	    install_rpm_plugin_procedure
 	    ;;
-	"Amazon Linux AMI 2014.09")
-	    needed_rpm=$aws_linux
-	    needed_rpm_name=$aws_linux_rpm
-	    printf "Install will proceed for %s\n" "$hostOS"
-	    install_rpm_plugin_procedure
-	    ;;
-	"Amazon Linux AMI 2015.03")
-	    needed_rpm=$aws_linux
-	    needed_rpm_name=$aws_linux_rpm
-	    printf "Install will proceed for %s\n" "$hostOS"
-	    install_rpm_plugin_procedure
-	    ;;
-	"Amazon Linux AMI 2015.09")
+	"Amazon Linux AMI"*)
 	    needed_rpm=$aws_linux
 	    needed_rpm_name=$aws_linux_rpm
 	    printf "Install will proceed for %s\n" "$hostOS"

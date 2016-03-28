@@ -144,36 +144,28 @@ assign_needed_os()
         2)
             hostOS="CentOS Linux 6"
         ;;
-        #Amazon Linux 2015.09
+        #Amazon Linux
         3)
-            hostOS="Amazon Linux AMI 2015.09"
-        ;;
-        #Amazon Linux 2015.03
-        4)
-            hostOS="Amazon Linux AMI 2015.03"
-        ;;
-        #Amazon Linux 2014.09
-        5)
-            hostOS="Amazon Linux AMI 2014.09"
+            hostOS="Amazon Linux (all versions 2014.09 and newer)"
         ;;
         #Ubuntu 15.04
-        6)
+        4)
             hostOS="Ubuntu 15.04"
         ;;
         #Ubuntu 14.04
-        7)
+        5)
             hostOS="Ubuntu 14.04.1 LTS"
         ;;
         #Ubuntu 12.04
-        8)
+        6)
             hostOS="Ubuntu 12.04"
         ;;
         #Debian GNU/Linux 7 (wheezy)
-        9)
+        7)
             hostOS="Debian GNU/Linux 7"
         ;;
         #Debian GNU/Linux 8 (jessie)
-        10)
+        8)
             hostOS="Debian GNU/Linux 8"
         ;;
         *)
@@ -212,15 +204,13 @@ get_os_input()
 Please enter the number of the OS you wish to install for:
 1. RHEL/Centos 7
 2. RHEL/Centos 6.x
-3. Amazon Linux 2015.09
-4. Amazon Linux 2015.03
-5. Amazon Linux 2014.09
-6. Ubuntu 15.04
-7. Ubuntu 14.04
-8. Ubuntu 12.04
-9. Debian GNU/Linux 7
-10. Debian GNU/Linux 8
-11. Other
+3. Amazon Linux (all versions 2014.09 and newer)
+4. Ubuntu 15.04
+5. Ubuntu 14.04
+6. Ubuntu 12.04
+7. Debian GNU/Linux 7
+8. Debian GNU/Linux 8
+9. Other
 0. Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
@@ -330,21 +320,7 @@ case $hostOS in
         confirm
         install_rpm_collectd_procedure
     ;;
-    "Amazon Linux AMI 2014.09")
-        needed_rpm=$aws_linux
-        needed_rpm_name=$aws_linux_rpm
-        printf "Install will proceed for %s\n" "$hostOS"
-        confirm
-        install_rpm_collectd_procedure
-    ;;
-    "Amazon Linux AMI 2015.03")
-        needed_rpm=$aws_linux
-        needed_rpm_name=$aws_linux_rpm
-        printf "Install will proceed for %s\n" "$hostOS"
-        confirm
-        install_rpm_collectd_procedure
-    ;;
-    "Amazon Linux AMI 2015.09")
+    "Amazon Linux AMI"*)
         needed_rpm=$aws_linux
         needed_rpm_name=$aws_linux_rpm
         printf "Install will proceed for %s\n" "$hostOS"
