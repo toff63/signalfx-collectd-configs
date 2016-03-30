@@ -3,6 +3,7 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
 source "${SCRIPT_DIR}/install_helpers"
 SFX_INGEST_URL="https://ingest.signalfx.com"
+insecure=""
 
 get_logfile() {
     LOGTO="\"/var/log/signalfx-collectd.log\""
@@ -87,7 +88,7 @@ get_source_config() {
 }
 
 usage(){
-    echo "$0 [-s SOURCE_TYPE] [-t API_TOKEN] [-u SIGNALFX_USER]"
+    echo "$0 [-s SOURCE_TYPE] [-t API_TOKEN] [-u SIGNALFX_USER] [-k]"
     echo "   [-o SIGNALFX_ORG] [-H HOSTNAME] [-i SFX_INGEST_URL] [/path/to/collectd]"
     echo "Installs collectd.conf and configures it for talking to SignalFx."
     echo "Installs the SignalFx collectd plugin on supported oses.  If on an unknown os"
@@ -101,6 +102,7 @@ usage(){
     echo " -H HOSTNAME: The Hostname value to use if you selected hostname as your source_type"
     echo
     echo " -i SFX_INGEST_URL: The Ingest URL to be used. Defaults to ${SFX_INGEST_URL}"
+    echo " -k Run curl insecurely with the --insecure option"
     echo
     echo "  Configuring SignalFX access"
     echo "------------------------------"
@@ -114,7 +116,7 @@ usage(){
 
 parse_args(){
     release_type=release
-    while getopts ":s:t:u:o:H:hbTa:i:" opt; do
+    while getopts ":s:t:u:o:H:hkbTa:i:" opt; do
         case "$opt" in
            s)
                SOURCE_TYPE="$OPTARG" ;;
@@ -132,6 +134,8 @@ parse_args(){
                SFX_INGEST_URL="$OPTARG" ;;
            h)
                usage 0; ;;
+           k)
+               insecure="--insecure"; ;;
            b)
                release_type=beta
                source "${SCRIPT_DIR}/install_helpers"
