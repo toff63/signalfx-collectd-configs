@@ -1,3 +1,6 @@
 .idea
 .arcconfig
 signalfx-configure-collectd.sh
+collectd-package-install.sh
+install_helpers.sh
+signalfx-collectd-configs.iml

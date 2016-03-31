@@ -17,7 +17,7 @@ local=0
 sfx_ingest_url="https://ingest.signalfx.com"
 
 usage() {
-    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ -y ]"
+    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ]"
     echo " -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set"
     echo " -H <hostname> will set the collectd hostname to <hostname> instead of what dns says."
     echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
