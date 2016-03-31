@@ -74,7 +74,7 @@ parse_args(){
        esac
     done
     if [ -n "$insecure" ]; then
-        echo "You have entered insecure mode"
+        echo "You have entered insecure mode; all curl commands will be executed with the -k 'insecure' parameter."
         confirm
     fi
 }
@@ -149,7 +149,7 @@ basic_collectd()
 
    if [ $local -eq 1 ]; then
        printf "Running From Local Source...\n"
-       ./install.sh $options
+       cat collectd-simple.sh | $sudo bash -s -- $options
    else
        curl $insecure -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- $options
    fi
