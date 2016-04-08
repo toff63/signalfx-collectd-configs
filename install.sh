@@ -256,7 +256,7 @@ check_with_user_and_stop_other_collectd_instances(){
     count_running_collectd_instances=$(pgrep -x collectd | wc -l)
     if [ $count_running_collectd_instances -ne 0 ]; then
         PROCEED_STATUS=0
-        printf "Currently, $count_running_collectds more instances of collectd are running on this machine\n"
+        printf "Currently, $count_running_collectd_instances more instances of collectd are running on this machine\n"
         printf "Do you want to\n"
         printf "1. Stop here and check\n"
         printf "2. Stop all running instances of collectd and start a new one\n"
