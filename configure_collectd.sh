@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
-source "${SCRIPT_DIR}/install_helpers"
+source "${SCRIPT_DIR}/install_helpers.sh"
 SFX_INGEST_URL="https://ingest.signalfx.com"
 insecure=""
 
@@ -220,8 +220,7 @@ install_signalfx_plugin() {
 
     printf "Fixing SignalFX plugin configuration.."
     sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
-        -e "s#%%%INGEST_HOST%%%#${SFX_INGEST_URL}#g" \
-        -e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
+        -e "s#URL.*#URL \"${SFX_INGEST_URL}/v1/collectd${EXTRA_DIMS}\"#g" \
         "${MANAGED_CONF_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
     check_for_err "Success\n";
 }

@@ -13,7 +13,6 @@ source_type=""
 insecure=""
 name=collectd_package_install
 debian_distribution_name=""
-local=0
 sfx_ingest_url="https://ingest.signalfx.com"
 
 usage() {
@@ -23,7 +22,7 @@ usage() {
     echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
     echo " --beta will use the beta repos instead of release."
     echo " --test will use the test repos instead of release."
-    echo " --insecure will use the insecure -k with all curl fetches."
+    echo " --insecure will use the insecure -k with any curl fetches."
     echo " -h this page."
     exit $1
 }
@@ -54,8 +53,6 @@ parse_args(){
            --test)
               stage=test
               installer_level="-T" ; shift 1 ;;
-           --local)
-              local=1 ; shift 1 ;;
            --insecure)
               insecure="-k"
               shift 1 ;;
@@ -147,12 +144,7 @@ basic_collectd()
    options=" ${source_type} ${installer_level} ${insecure} ${api_token} -i ${sfx_ingest_url}"
    printf "Starting Configuration of collectd... $options \n"
 
-   if [ $local -eq 1 ]; then
-       printf "Running From Local Source...\n"
-       cat collectd-simple.sh | $sudo bash -s -- $options
-   else
-       curl $insecure -sSL https://dl.signalfx.com/collectd-simple | $sudo bash -s -- $options
-   fi
+   cat configure_collectd.sh | $sudo bash -s -- $options
 }
 
 #Function to determine the OS to install for from end user input

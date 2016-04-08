@@ -1,4 +1,3 @@
-export LATEST_VER=5.5.0
 vercomp () {
     if [[ $1 == "$2" ]]
     then
