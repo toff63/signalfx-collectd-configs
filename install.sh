@@ -9,6 +9,8 @@ needed_package_name=null_package_name
 stage=release
 installer_level=""
 interactive=1
+skip_install=0
+test_files=""
 source_type=""
 insecure=""
 name=collectd_package_install
@@ -46,6 +48,7 @@ usage() {
     echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
     echo " --beta will use the beta repos instead of release."
     echo " --test will use the test repos instead of release."
+    echo " --configure-only will use the installed collectd instead of attempting to install."
     echo " --insecure will use the insecure -k with any curl fetches."
     echo " -h this page."
     exit $1
@@ -77,9 +80,12 @@ parse_args(){
            --test)
               stage=test
               installer_level="-T" ; shift 1 ;;
+           --test-files)
+              test_files="-test" shift 1;;
            --insecure)
-              insecure="-k"
-              shift 1 ;;
+              insecure="-k" shift 1 ;;
+           --configure-only)
+              skip_install=1 shift 1 ;;
            -H)
               [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
               source_type="-s input -H $2"; shift 2 ;;
@@ -627,9 +633,9 @@ get_logfile() {
 }
 
 download_configs() {
-    curl -sSL $insecure https://dl.signalfx.com/
-
+    curl -sSL $insecure https://dl.signalfx.com/install-files${test-files}.tgz
 }
+
 get_collectd_config() {
     printf "Getting config file for collectd..."
     COLLECTD_CONFIG=$(${COLLECTD} -h 2>/dev/null | grep 'Config file' | awk '{ print $3; }')
@@ -896,5 +902,5 @@ configure_collectd() {
 parse_args_wrapper "$@"
 determine_os
 
-perform_install_for_os
+[ $skip_install -eq 0 ] && perform_install_for_os
 configure_collectd
