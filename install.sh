@@ -7,7 +7,6 @@ needed_deps="tar curl"
 needed_rpm_name=null_rpm_name
 needed_package_name=null_package_name
 stage=release
-installer_level=""
 interactive=1
 skip_install=0
 test_files=""
@@ -51,7 +50,7 @@ usage() {
     echo " --configure-only will use the installed collectd instead of attempting to install."
     echo " --insecure will use the insecure -k with any curl fetches."
     echo " -h this page."
-    exit $1
+    exit "$1"
 }
 
 #confirm user input (yes or no)
@@ -75,11 +74,9 @@ parse_args(){
               [ -z "$source_type" ] && source_type="-s dns"
               interactive=0; shift 1 ;;
            --beta)
-              stage=beta
-              installer_level="-b" ; shift 1 ;;
+              stage=beta; shift 1;;
            --test)
-              stage=test
-              installer_level="-T" ; shift 1 ;;
+              stage=test; shift 1;;
            --test-files)
               test_files="-test" shift 1;;
            --insecure)
@@ -117,7 +114,7 @@ parse_args_wrapper() {
 
     if [ "$#" -gt 0 ]; then
 
-        if [ ! "`echo $1 | cut -c1`" = "-" ]; then
+        if [ "$(echo "$1" | cut -c1)" != "-" ]; then
             api_token="-t $1"
             raw_api_token=$1
             shift
@@ -134,7 +131,7 @@ parse_args_wrapper() {
     fi
 
     if [ -n "$api_token" ]; then
-        api_output=`curl $insecure -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST $sfx_ingest_url/v2/event 2>/dev/null`
+        api_output=$(curl $insecure -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST "$sfx_ingest_url"/v2/event 2>/dev/null)
         if [ ! "$api_output" = "\"OK\"" ]; then
             echo "There was a problem with the api token '$raw_api_token' passed in and we were unable to communicate with SignalFx: $api_output"
             echo "Please check your auth token is valid or check your networking."
@@ -149,7 +146,7 @@ parse_args_wrapper() {
     else
         sudo="sudo"
     fi
-fi
+}
 
 
 determine_os() {
@@ -261,11 +258,11 @@ Enter your Selection: "
 install_rpm_collectd_procedure() {
     #install deps
     printf "Installing Dependencies\n"
-    $sudo yum -y install $needed_deps
+    $sudo yum -y install "$needed_deps"
 
     #download signalfx rpm for collectd
-    printf "Downloading SignalFx RPM $needed_rpm\n"
-    curl $insecure $needed_rpm -o $needed_rpm_name
+    printf "Downloading SignalFx RPM %s\n" "$needed_rpm"
+    curl $insecure $needed_rpm -o "$needed_rpm_name"
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx RPM\n"
@@ -295,7 +292,7 @@ install_debian_collectd_procedure() {
 
     #Installing dependent packages to later add signalfx repo
     printf "Installing source package to get SignalFx collectd package\n"
-    $sudo apt-get -y install $needed_deps $needed_package_name
+    $sudo apt-get -y install "$needed_deps" "$needed_package_name"
 
     if [ "$stage" = "test" ]; then
         printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
@@ -324,105 +321,109 @@ install_debian_collectd_procedure() {
 
 #take "hostOS" and match it up to OS and assign tasks
 perform_install_for_os() {
-case $hostOS in
-    "CentOS Linux 7")
-        needed_rpm=$centos
-        needed_rpm_name=$centos_rpm
-	    needed_plugin_rpm=$centos_plugin
-	    needed_plugin_rpm_name=$centos_plugin_rpm
-        printf "Install will proceed for %s\n" "$hostOS"
-        confirm
-        install_rpm_collectd_procedure
-	    install_rpm_plugin_procedure
-    ;;
-    "CentOS Linux 6")
-        needed_rpm=$centos
-        needed_rpm_name=$centos_rpm
-	    needed_plugin_rpm=$centos_plugin
-	    needed_plugin_rpm_name=$centos_plugin_rpm
-        printf "Install will proceed for %s\n" "$hostOS"
-        confirm
-        install_rpm_collectd_procedure
-    ;;
-    "Amazon Linux AMI"*)
-        needed_rpm=$aws_linux
-        needed_rpm_name=$aws_linux_rpm
-	    needed_plugin_rpm=$aws_linux_plugin
-	    needed_plugin_rpm_name=$aws_linux_plugin_rpm
-        printf "Install will proceed for %s\n" "$hostOS"
-        confirm
-        install_rpm_collectd_procedure
-    ;;
-    "Ubuntu 15.04"*)
-        needed_package_name=software-properties-common
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="vivid"
-        confirm
-        install_debian_collectd_procedure
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Ubuntu 14.04"*)
-        needed_package_name=software-properties-common
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="trusty"
-        confirm
-        install_debian_collectd_procedure
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Ubuntu 12.04"* | "Ubuntu precise"*)
-        needed_package_name=python-software-properties
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="precise"
-        confirm
-        install_debian_collectd_procedure
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Debian GNU/Linux 7")
-        needed_package_name="apt-transport-https"
-        printf "Install will proceed for %s\n" "$hostOS"
-        repo_link=$wheezy_ppa
-        debian_distribution_name="wheezy"
-        confirm
-        install_debian_collectd_procedure
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Debian GNU/Linux 8")
-        needed_package_name="apt-transport-https"
-        printf "Install will proceed for %s\n" "$hostOS"
-        repo_link=$jessie_ppa
-        debian_distribution_name="jessie"
-        confirm
-        install_debian_collectd_procedure
-        install_debian_collectd_plugin_procedure
-    ;;
-    *)
-    case $hostOS_2 in
-        "CentOS release 6")
-            needed_rpm=$centos
-            needed_rpm_name=$centos_rpm
-            needed_plugin_rpm=$centos_plugin
-            needed_plugin_rpm_name=$centos_plugin_rpm
-            printf "Install will proceed for %s\n" "$hostOS_2"
-            confirm
-            install_rpm_collectd_procedure
-	        install_rpm_plugin_procedure
-        ;;
-        "Red Hat Enterpri")
+    case $hostOS in
+        "CentOS Linux 7")
             needed_rpm=$centos
             needed_rpm_name=$centos_rpm
             needed_plugin_rpm=$centos_plugin
             needed_plugin_rpm_name=$centos_plugin_rpm
             printf "Install will proceed for %s\n" "$hostOS"
+            confirm
             install_rpm_collectd_procedure
-	        install_rpm_plugin_procedure
+            install_rpm_plugin_procedure
+        ;;
+        "CentOS Linux 6")
+            needed_rpm=$centos
+            needed_rpm_name=$centos_rpm
+            needed_plugin_rpm=$centos_plugin
+            needed_plugin_rpm_name=$centos_plugin_rpm
+            printf "Install will proceed for %s\n" "$hostOS"
+            confirm
+            install_rpm_collectd_procedure
+        ;;
+        "Amazon Linux AMI"*)
+            needed_rpm=$aws_linux
+            needed_rpm_name=$aws_linux_rpm
+            needed_plugin_rpm=$aws_linux_plugin
+            needed_plugin_rpm_name=$aws_linux_plugin_rpm
+            printf "Install will proceed for %s\n" "$hostOS"
+            confirm
+            install_rpm_collectd_procedure
+        ;;
+        "Ubuntu 15.04"*)
+            needed_package_name=software-properties-common
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="vivid"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
+        ;;
+        "Ubuntu 14.04"*)
+            needed_package_name=software-properties-common
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="trusty"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
+        ;;
+        "Ubuntu 12.04"* | "Ubuntu precise"*)
+            needed_package_name=python-software-properties
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="precise"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
+        ;;
+        "Debian GNU/Linux 7")
+            needed_package_name="apt-transport-https"
+            printf "Install will proceed for %s\n" "$hostOS"
+            repo_link=$wheezy_ppa
+            debian_distribution_name="wheezy"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
+        ;;
+        "Debian GNU/Linux 8")
+            needed_package_name="apt-transport-https"
+            printf "Install will proceed for %s\n" "$hostOS"
+            repo_link=$jessie_ppa
+            debian_distribution_name="jessie"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
         ;;
         *)
-            get_os_input
-            perform_install_for_os
+        case $hostOS_2 in
+            "CentOS release 6")
+                needed_rpm=$centos
+                needed_rpm_name=$centos_rpm
+                needed_plugin_rpm=$centos_plugin
+                needed_plugin_rpm_name=$centos_plugin_rpm
+                printf "Install will proceed for %s\n" "$hostOS_2"
+                confirm
+                install_rpm_collectd_procedure
+                install_rpm_plugin_procedure
+            ;;
+            "Red Hat Enterpri")
+                needed_rpm=$centos
+                needed_rpm_name=$centos_rpm
+                needed_plugin_rpm=$centos_plugin
+                needed_plugin_rpm_name=$centos_plugin_rpm
+                printf "Install will proceed for %s\n" "$hostOS"
+                install_rpm_collectd_procedure
+                install_rpm_plugin_procedure
+            ;;
+            *)
+                get_os_input
+                perform_install_for_os
+            ;;
+        esac
         ;;
     esac
-    ;;
-esac
+    if [ -z "$FOUND" ]; then
+        printf "Unsupported OS, will not attempt to install plugin\n"
+        NO_PLUGIN=1
+    fi
 }
 
 vercomp () {
@@ -461,10 +462,10 @@ vercomp () {
 
 check_for_err() {
     if [ $? != 0 ]; then
-    printf "FAILED\n";
-    exit 1;
+        printf "FAILED\n"
+        exit 1
     else
-    printf "$@";
+        echo "$@"
     fi
 }
 
@@ -495,91 +496,17 @@ install_rpm_plugin_procedure() {
     fi
     #download signalfx plugin rpm for collectd
     printf "Downloading SignalFx plugin RPM\n"
-    curl $insecure $needed_rpm -o $needed_rpm_name
+    curl $insecure $needed_plugin_rpm -o $needed_plugin_rpm_name
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx plugin RPM\n"
-    $sudo yum -y install $needed_rpm_name
-    $sudo rm -f $needed_rpm_name
+    $sudo yum -y install $needed_plugin_rpm_name
+    $sudo rm -f $needed_plugin_rpm_name
 
     #install collectd from signalfx plugin rpm
     printf "Installing signalfx-collectd-plugin\n"
     $sudo yum -y install signalfx-collectd-plugin
     FOUND=1
-}
-
-install_plugin() {
-
-    determine_os
-
-    #take "hostOS" and match it up to OS and assign tasks
-    case $hostOS in
-	"CentOS Linux 7")
-	    printf "Install will proceed for %s\n" "$hostOS"
-	    install_rpm_plugin_procedure
-	    ;;
-	"CentOS Linux 6")
-	    needed_plugin_rpm=$centos_plugin
-	    needed_plugin_rpm_name=$centos_plugin_rpm
-	    printf "Install will proceed for %s\n" "$hostOS"
-	    install_rpm_plugin_procedure
-	    ;;
-	"Amazon Linux AMI"*)
-	    printf "Install will proceed for %s\n" "$hostOS"
-	    install_rpm_plugin_procedure
-	    ;;
-    "Debian GNU/Linux 7")
-        needed_package_name="apt-transport-https"
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="wheezy"
-        ;;
-    "Debian GNU/Linux 8")
-        needed_package_name="apt-transport-https"
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="jessie"
-        install_debian_collectd_plugin_procedure
-        ;;
-    "Ubuntu 15.04"*)
-        needed_package_name=software-properties-common
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="vivid"
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Ubuntu 14.04"*)
-        needed_package_name=software-properties-common
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="trusty"
-        install_debian_collectd_plugin_procedure
-    ;;
-    "Ubuntu 12.04"* | "Ubuntu precise"*)
-        needed_package_name=python-software-properties
-        printf "Install will proceed for %s\n" "$hostOS"
-        debian_distribution_name="precise"
-        install_debian_collectd_plugin_procedure
-    ;;
-        *)
-	    case $hostOS_2 in
-		"CentOS release 6")
-		    needed_plugin_rpm=$centos_plugin
-		    needed_plugin_rpm_name=$centos_plugin_rpm
-		    printf "Install will proceed for %s\n" "$hostOS_2"
-		    install_rpm_plugin_procedure
-		    ;;
-        "Red Hat Enterpri")
-            needed_plugin_rpm=$centos_plugin
-            needed_plugin_rpm_name=$centos_plugin_rpm
-            printf "Install will proceed for %s\n" "$hostOS"
-            install_rpm_plugin_procedure
-            ;;
-		*)
-		    ;;
-	    esac
-	    ;;
-    esac
-    if [ -z "$FOUND" ]; then
-	printf "Unsupported OS, will not attempt to install plugin\n"
-	NO_PLUGIN=1
-    fi
 }
 
 #Debian Based Linux Functions
@@ -593,18 +520,18 @@ install_debian_collectd_plugin_procedure() {
     printf "Installing source package to get SignalFx collectd plugin package\n"
     $sudo apt-get -y install $needed_package_name
 
-    repo_link="https://dl.signalfx.com/debs/signalfx-collectd-plugin/${debian_distribution_name}/${release_type}"
-    if [ "$release_type" = "test" ]; then
+    repo_link="https://dl.signalfx.com/debs/signalfx-collectd-plugin/${debian_distribution_name}/${stage}"
+    if [ "$stage" = "test" ]; then
         printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
-        echo "deb [trusted=yes] ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${release_type}-${debian_distribution_name}.list > /dev/null
+        echo "deb [trusted=yes] ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${stage}-${debian_distribution_name}.list > /dev/null
     else
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
         if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
-            echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${release_type}-${debian_distribution}.list > /dev/null
+            echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${stage}-${debian_distribution_name}.list > /dev/null
         else
-            $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${release_type}
+            $sudo add-apt-repository -y ppa:signalfx/collectd-plugin-${stage}
         fi
     fi
 
@@ -633,7 +560,7 @@ get_logfile() {
 }
 
 download_configs() {
-    curl -sSL $insecure https://dl.signalfx.com/install-files${test-files}.tgz
+    curl -sSL $insecure https://dl.signalfx.com/install-files${test_files}.tgz
 }
 
 get_collectd_config() {
@@ -681,19 +608,19 @@ get_source_config() {
         echo "dns - Use the name of the host by resolving it in dns"
         echo "input - You can enter a hostname to use as the source name"
         echo
-        read -p "How would you like to configure your Hostname? (dns  or input): " SOURCE_TYPE < /dev/tty
+        read -r -p "How would you like to configure your Hostname? (dns  or input): " SOURCE_TYPE < /dev/tty
 
-        while [ "$SOURCE_TYPE" != "dns" -a "$SOURCE_TYPE" != "input" ]; do
-            read -p "Invalid answer. How would you like to configure your Hostname? (dns or input): " SOURCE_TYPE < /dev/tty
+        while [ "$SOURCE_TYPE" != "dns" ] && [ "$SOURCE_TYPE" != "input" ]; do
+            read -r -p "Invalid answer. How would you like to configure your Hostname? (dns or input): " SOURCE_TYPE < /dev/tty
         done
     fi
 
     case $SOURCE_TYPE in
     "input")
         if [ -z "$INPUT_HOSTNAME" ]; then
-            read -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
+            read -r -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
             while [ -z "$INPUT_HOSTNAME" ]; do
-              read -p "Invalid input. Input hostname value: " INPUT_HOSTNAME < /dev/tty
+              read -r -p "Invalid input. Input hostname value: " INPUT_HOSTNAME < /dev/tty
             done
         fi
         SOURCE_NAME_INFO="Hostname \"${INPUT_HOSTNAME}\""
@@ -716,8 +643,7 @@ install_config(){
 
 install_filters() {
     printf "Installing filtering configs\n"
-    for i in `ls -1 ${FILTERING_CONF_DIR}`
-    do
+    for i in ${FILTERING_CONF_DIR}/*; do
      cp "${FILTERING_CONF_DIR}/$i" "${COLLECTD_FILTERING_CONFIG_DIR}/"
      check_for_err  "Instaiilng $i - Success\n"
     done
@@ -725,12 +651,12 @@ install_filters() {
 }
 check_for_aws() {
     printf "Checking to see if this box is in AWS: "
-    AWS_UNIQUE_ID=$(${SCRIPT_DIR}/get_aws_unique_id)
+    AWS_UNIQUE_ID=$("${SCRIPT_DIR}/get_aws_unique_id")
     status=$?
     if [ $status -eq 0 ]; then
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
-    elif [ $status -ne 28 -a $status -ne 7 ]; then
+    elif [ $status -ne 28 ] && [ $status -ne 7 ]; then
         check_for_err "Unknown Error $status\n"
     else
         printf "Not IN AWS\n"
@@ -740,15 +666,15 @@ check_for_aws() {
 install_plugin_common() {
     if [ -z "$API_TOKEN" ]; then
        if [ -z "${SFX_USER}" ]; then
-           read -p "Input SignalFx user name: " SFX_USER < /dev/tty
+           read -r -p "Input SignalFx user name: " SFX_USER < /dev/tty
            while [ -z "${SFX_USER}" ]; do
-               read -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
+               read -r -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
-       API_TOKEN=$(python ${SCRIPT_DIR}/get_all_auth_tokens.py --print_token_only --error_on_multiple ${SFX_API} ${SFX_ORG} "${SFX_USER}")
+       API_TOKEN=$(python "${SCRIPT_DIR}/get_all_auth_tokens.py" --print_token_only --error_on_multiple "${SFX_API}" "${SFX_ORG}" "${SFX_USER}")
        if [ -z "$API_TOKEN" ]; then
           echo "Failed to get SignalFx API token";
-          exit 2;
+          exit "2";
        fi
     fi
     check_for_aws
@@ -795,15 +721,15 @@ verify_configs(){
 
 check_with_user_and_stop_other_collectd_instances(){
     count_running_collectd_instances=$(pgrep -x collectd | wc -l)
-    if [ $count_running_collectd_instances -ne 0 ]; then
+    if [ x"$count_running_collectd_instances" -ne "x0" ]; then
         PROCEED_STATUS=0
-        printf "Currently, $count_running_collectds more instances of collectd are running on this machine\n"
+        printf "Currently, %s more instances of collectd are running on this machine\n" "$count_running_collectd_instances"
         printf "Do you want to\n"
         printf "1. Stop here and check\n"
         printf "2. Stop all running instances of collectd and start a new one\n"
         printf "3. Start this along with others\n"
         while [[ ! ( $PROCEED_STATUS -eq 1 || $PROCEED_STATUS -eq 2 || $PROCEED_STATUS -eq 3 ) ]]; do
-            read -p "Choose an option(1/2/3): " PROCEED_STATUS < /dev/tty
+            read -r -p "Choose an option(1/2/3): " PROCEED_STATUS < /dev/tty
         done
         case $PROCEED_STATUS in
             1)
@@ -819,22 +745,7 @@ check_with_user_and_stop_other_collectd_instances(){
     fi
 }
 
-find_collectd(){
-    COLLECTD=${@:$OPTIND:1}
-    if [ -z "${COLLECTD}" ]; then
-        find_installed_collectd
-        if [ -z "${COLLECTD}" ]; then
-            echo "Unable to find collectd"
-            usage 2
-        else
-            echo "Collectd not specified using: ${COLLECTD}"
-        fi
-   fi
-}
-
-
 configure_collectd() {
-    find_collectd
     get_collectd_config
     get_source_config
     get_logfile
