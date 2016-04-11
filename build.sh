@@ -11,3 +11,5 @@ done
 curl -sSL "https://raw.githubusercontent.com/signalfx/integrations/master/collectd/collectd.conf.tmpl" > collectd.conf.tmpl
 
 ./create_installer.sh
+
+aws s3 cp install.sh s3://public-downloads--signalfuse-com/collectd-install-test --cache-control="max-age=0, no-cache"
