@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 #variables used
 selection=0
 needed_rpm=null_rpm_link
@@ -66,29 +68,36 @@ confirm ()
     fi
 }
 
-
 parse_args(){
     while [ $# -gt 0 ]; do
         case $1 in
            -y)
-              [ -z "$source_type" ] && source_type="-s dns"
-              interactive=0; shift 1 ;;
+              [ -z "$source_type" ] && source_type="dns"
+              export interactive=0
+              shift 1 ;;
            --beta)
-              stage=beta; shift 1;;
+              export stage=beta
+              shift 1;;
            --test)
-              stage=test; shift 1;;
+              export stage=test
+              shift 1;;
            --test-files)
-              test_files="-test" shift 1;;
+              export test_files="-test"
+              shift 1;;
            --insecure)
-              insecure="-k" shift 1 ;;
+              export insecure="-k"
+              shift 1 ;;
            --configure-only)
-              skip_install=1 shift 1 ;;
+              export skip_install=1
+              shift 1 ;;
            -H)
               [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
-              source_type="-s input -H $2"; shift 2 ;;
+              export source_type="input"
+              export hostname="$2"
+              shift 2 ;;
            -U)
               [ -z "$2" ] && echo "Argument required for Ingest URL parameter." && usage -1
-              sfx_ingest_url="$2"; shift 2 ;;
+              export sfx_ingest_url="$2"; shift 2 ;;
            -h)
                usage 0; ;;
            \?) echo "Invalid option: -$1" >&2;
@@ -104,9 +113,8 @@ parse_args(){
 }
 
 parse_args_wrapper() {
-    BASE_DIR=$(cd "$(dirname "$0")" && pwd 2>/dev/null)
-    MANAGED_CONF_DIR=${BASE_DIR}/managed_config
-    FILTERING_CONF_DIR=${BASE_DIR}/filtering_config
+    export DLFILE=$(mktemp -d -t sfx-download-XXXXXX)
+    export BASE_DIR="$DLFILE"
 
     if [ "$1" = "-h" ]; then
         usage 0
@@ -115,8 +123,7 @@ parse_args_wrapper() {
     if [ "$#" -gt 0 ]; then
 
         if [ "$(echo "$1" | cut -c1)" != "-" ]; then
-            api_token="-t $1"
-            raw_api_token=$1
+            export raw_api_token=$1
             shift
         fi
     fi
@@ -125,12 +132,12 @@ parse_args_wrapper() {
         parse_args "$@"
     fi
 
-    if [ $interactive -eq 0 ] && [ -z "$api_token" ]; then
+    if [ $interactive -eq 0 ] && [ -z "$raw_api_token" ]; then
         echo "Non-interactive requires the api token"
         usage -1
     fi
 
-    if [ -n "$api_token" ]; then
+    if [ -n "$raw_api_token" ]; then
         api_output=$(curl $insecure -d '[]' -H "X-Sf-Token: $raw_api_token" -H "Content-Type:application/json" -X POST "$sfx_ingest_url"/v2/event 2>/dev/null)
         if [ ! "$api_output" = "\"OK\"" ]; then
             echo "There was a problem with the api token '$raw_api_token' passed in and we were unable to communicate with SignalFx: $api_output"
@@ -146,6 +153,7 @@ parse_args_wrapper() {
     else
         sudo="sudo"
     fi
+    export sudo
 }
 
 
@@ -153,19 +161,11 @@ determine_os() {
     #determine hostOS for newer versions of Linux
     hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
     if [ ! -f /etc/redhat-release ]
-    then
-	hostOS_2=null_os
+        then
+        hostOS_2=null_os
     else
-	#older versions of RPM based Linux that don't have version in PRETTY_NAME format
-	hostOS_2=$(head -c 16 /etc/redhat-release)
-    fi
-
-    #determine if the script is being run by root or not
-    user=$(whoami)
-    if [ "$user" == "root" ]; then
-	sudo=""
-    else
-	sudo="sudo"
+        #older versions of RPM based Linux that don't have version in PRETTY_NAME format
+        hostOS_2=$(head -c 16 /etc/redhat-release)
     fi
 }
 
@@ -258,7 +258,7 @@ Enter your Selection: "
 install_rpm_collectd_procedure() {
     #install deps
     printf "Installing Dependencies\n"
-    $sudo yum -y install "$needed_deps"
+    $sudo yum -y install $needed_deps
 
     #download signalfx rpm for collectd
     printf "Downloading SignalFx RPM %s\n" "$needed_rpm"
@@ -292,7 +292,7 @@ install_debian_collectd_procedure() {
 
     #Installing dependent packages to later add signalfx repo
     printf "Installing source package to get SignalFx collectd package\n"
-    $sudo apt-get -y install "$needed_deps" "$needed_package_name"
+    $sudo apt-get -y install $needed_deps "$needed_package_name"
 
     if [ "$stage" = "test" ]; then
         printf "Getting SignalFx collectd package from test repo hosted at SignalFx\n"
@@ -472,7 +472,7 @@ check_for_err() {
 find_installed_collectd(){
    for p in /opt/signalfx-collectd/sbin/collectd /usr/sbin/collectd "/usr/local/sbin/collectd"; do
        if [ -x $p ]; then
-           COLLECTD=${p}
+           export COLLECTD=${p}
            find_collectd_ver
            break;
        fi
@@ -492,6 +492,7 @@ find_collectd_ver() {
 install_rpm_plugin_procedure() {
     if [ -f /opt/signalfx-collectd-plugin/signalfx_metadata.py ]; then
         printf "SignalFx collectd plugin already installed\n"
+        FOUND=1
         return
     fi
     #download signalfx plugin rpm for collectd
@@ -514,6 +515,7 @@ install_rpm_plugin_procedure() {
 install_debian_collectd_plugin_procedure() {
     if [ -f /opt/signalfx-collectd-plugin/signalfx_metadata.py ]; then
         printf "SignalFx collectd plugin already installed\n"
+        FOUND=1
         return
     fi
     #Installing dependent packages to later add signalfx plugin repo
@@ -559,13 +561,13 @@ get_logfile() {
     fi
 }
 
-download_configs() {
-    curl -sSL $insecure https://dl.signalfx.com/install-files${test_files}.tgz
-}
-
 get_collectd_config() {
+    curl -sSL $insecure https://dl.signalfx.com/install-files${test_files}.tgz  | tar -C $DLFILE -xvzf -
+
     printf "Getting config file for collectd..."
+    find_installed_collectd
     COLLECTD_CONFIG=$(${COLLECTD} -h 2>/dev/null | grep 'Config file' | awk '{ print $3; }')
+
     if [ -z "$COLLECTD_CONFIG" ]; then
         echo "Failed"
         exit 2;
@@ -598,38 +600,37 @@ get_collectd_config() {
     else
         echo "Success";
     fi
-    find_collectd_ver
 }
 
 get_source_config() {
-    if [ -z "$SOURCE_TYPE" ]; then
+    if [ -z "$source_type" ]; then
         echo "There are two ways to configure the source name to be used by collectd"
         echo "when reporting metrics:"
         echo "dns - Use the name of the host by resolving it in dns"
         echo "input - You can enter a hostname to use as the source name"
         echo
-        read -r -p "How would you like to configure your Hostname? (dns  or input): " SOURCE_TYPE < /dev/tty
+        read -r -p "How would you like to configure your Hostname? (dns  or input): " source_type < /dev/tty
 
-        while [ "$SOURCE_TYPE" != "dns" ] && [ "$SOURCE_TYPE" != "input" ]; do
-            read -r -p "Invalid answer. How would you like to configure your Hostname? (dns or input): " SOURCE_TYPE < /dev/tty
+        while [ "$source_type" != "dns" ] && [ "$source_type" != "input" ]; do
+            read -r -p "Invalid answer. How would you like to configure your Hostname? (dns or input): " source_type < /dev/tty
         done
     fi
 
-    case $SOURCE_TYPE in
+    case $source_type in
     "input")
-        if [ -z "$INPUT_HOSTNAME" ]; then
-            read -r -p "Input hostname value: " INPUT_HOSTNAME < /dev/tty
-            while [ -z "$INPUT_HOSTNAME" ]; do
-              read -r -p "Invalid input. Input hostname value: " INPUT_HOSTNAME < /dev/tty
+        if [ -z "$hostname" ]; then
+            read -r -p "Input hostname value: " hostname < /dev/tty
+            while [ -z "$hostname" ]; do
+              read -r -p "Invalid input. Input hostname value: " hostname < /dev/tty
             done
         fi
-        SOURCE_NAME_INFO="Hostname \"${INPUT_HOSTNAME}\""
+        SOURCE_NAME_INFO="Hostname \"${hostname}\""
         ;;
     "dns")
         SOURCE_NAME_INFO="FQDNLookup   true"
         ;;
     *)
-        echo "Invalid SOURCE_TYPE value ${SOURCE_TYPE}";
+        echo "Invalid SOURCE_TYPE value ${source_type}";
         exit 2;
     esac
 
@@ -637,23 +638,21 @@ get_source_config() {
 
 install_config(){
     printf "Installing %s.." "$2"
-    cp "${MANAGED_CONF_DIR}/$1" "${COLLECTD_MANAGED_CONFIG_DIR}"
+    cp "${DLFILE}/$1" "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success\n"
 }
 
 install_filters() {
     printf "Installing filtering configs\n"
-    for i in ${FILTERING_CONF_DIR}/*; do
-     cp "${FILTERING_CONF_DIR}/$i" "${COLLECTD_FILTERING_CONFIG_DIR}/"
-     check_for_err  "Instaiilng $i - Success\n"
-    done
-
+    cp "${BASE_DIR}/filtering.conf" "${COLLECTD_FILTERING_CONFIG_DIR}/"
+    check_for_err  "Installing filtering.conf - Success\n"
 }
+
 check_for_aws() {
+    [ -n "$AWS_DONE" ] && return
     printf "Checking to see if this box is in AWS: "
-    AWS_UNIQUE_ID=$("${SCRIPT_DIR}/get_aws_unique_id")
-    status=$?
-    if [ $status -eq 0 ]; then
+    AWS_UNIQUE_ID=$("${DLFILE}/get_aws_unique_id") || true
+    if [ -n "$AWS_UNIQUE_ID" ]; then
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
     elif [ $status -ne 28 ] && [ $status -ne 7 ]; then
@@ -661,18 +660,19 @@ check_for_aws() {
     else
         printf "Not IN AWS\n"
     fi
+    AWS_DONE=1
 }
 
 install_plugin_common() {
-    if [ -z "$API_TOKEN" ]; then
+    if [ -z "$raw_api_token" ]; then
        if [ -z "${SFX_USER}" ]; then
            read -r -p "Input SignalFx user name: " SFX_USER < /dev/tty
            while [ -z "${SFX_USER}" ]; do
                read -r -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
-       API_TOKEN=$(python "${SCRIPT_DIR}/get_all_auth_tokens.py" --print_token_only --error_on_multiple "${SFX_API}" "${SFX_ORG}" "${SFX_USER}")
-       if [ -z "$API_TOKEN" ]; then
+       raw_api_token=$(python "${DLFILE}/get_all_auth_tokens.py" --print_token_only --error_on_multiple "${SFX_API}" "${SFX_ORG}" "${SFX_USER}")
+       if [ -z "$raw_api_token" ]; then
           echo "Failed to get SignalFx API token";
           exit "2";
        fi
@@ -687,9 +687,9 @@ install_signalfx_plugin() {
     install_plugin_common
 
     printf "Fixing SignalFX plugin configuration.."
-    sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
+    sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
         -e "s#URL.*#URL \"${sfx_ingest_url}/v1/collectd${EXTRA_DIMS}\"#g" \
-        "${MANAGED_CONF_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
+        "${BASE_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
     check_for_err "Success\n";
 }
 
@@ -697,10 +697,10 @@ install_write_http_plugin(){
     install_plugin_common
 
     printf "Fixing write_http plugin configuration.."
-    sed -e "s#%%%API_TOKEN%%%#${API_TOKEN}#g" \
+    sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
         -e "s#%%%INGEST_HOST%%%#${sfx_ingest_url}#g" \
 	-e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
-        "${MANAGED_CONF_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
+        "${BASE_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
     check_for_err "Success\n";
 }
 
@@ -783,7 +783,6 @@ configure_collectd() {
     check_for_err "Success\n"
 
     # Install Plugin
-    install_plugin
     install_signalfx_plugin
 
     # Install managed_configs
@@ -812,6 +811,6 @@ configure_collectd() {
 #Determine the OS and install/configure collectd to send metrics to SignalFx
 parse_args_wrapper "$@"
 determine_os
-
 [ $skip_install -eq 0 ] && perform_install_for_os
 configure_collectd
+rm -rf "$DLFILE"
