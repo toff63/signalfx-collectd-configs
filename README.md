@@ -1,6 +1,8 @@
 # SignalFx CollectD configs
+# This repo has been deprecated in favour of the [Integrations](https://github.com/signalfx/integrations) repo.
 
 ## About
+
 
 A collection of [collectd](http://www.collectd.org) configs that work
 well with SignalFx.
