@@ -7,7 +7,7 @@
 # exits with 28 if there was a timeout talking to AWS to get information
 # all other exit codes come from curl
 #
-DOC="$(curl -s --connect-timeout 1 http://169.254.169.254/2014-11-05/dynamic/instance-identity/document)"
+DOC="$(curl -s --connect-timeout 1 --max-time 4 http://169.254.169.254/2014-11-05/dynamic/instance-identity/document)"
 status=$?
 if [ $status -eq 0 ]; then
    eval "$(echo "$DOC" | awk -F: '
